@@ -1,0 +1,5 @@
+{
+  "name": "METS Builder",
+  "description": "A professional tool for creating Metadata Encoding and Transmission Standard (METS) XML files for digitalized archives, managing descriptive, administrative, file, and structural metadata.",
+  "requestFramePermissions": []
+}
