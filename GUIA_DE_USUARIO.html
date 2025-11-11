@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Completa de Usuario - METS XML Builder</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #fff;
+        }
+
+        h1 {
+            color: #2563eb;
+            font-size: 2.5em;
+            margin-top: 0;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            color: #1e40af;
+            font-size: 2em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            page-break-after: avoid;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: #1e3a8a;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            color: #1e40af;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 15px 0;
+            orphans: 3;
+            widows: 3;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+            page-break-inside: avoid;
+        }
+
+        table thead tr {
+            background-color: #2563eb;
+            color: white;
+            text-align: left;
+        }
+
+        table th,
+        table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+        }
+
+        table tbody tr {
+            border-bottom: 1px solid #ddd;
+        }
+
+        table tbody tr:nth-of-type(even) {
+            background-color: #f3f4f6;
+        }
+
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #dc2626;
+        }
+
+        pre {
+            background-color: #1f2937;
+            color: #f3f4f6;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        blockquote {
+            margin: 20px 0;
+            padding: 15px 20px;
+            background-color: #fef3c7;
+            border-left: 5px solid #f59e0b;
+            font-style: italic;
+        }
+
+        .section-card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .checklist {
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .example {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .warning {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .note {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin: 40px 0;
+        }
+
+        .toc {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .toc h2 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 10px 0;
+        }
+
+        .toc a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .print-button:hover {
+            background-color: #1e40af;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                max-width: 100%;
+            }
+
+            a {
+                color: #000;
+                text-decoration: none;
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid;
+            }
+
+            img, table, pre, blockquote {
+                page-break-inside: avoid;
+            }
+        }
+
+        .emoji {
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">📄 Guardar como PDF</button>
+
+    <h1><span class="emoji">📖</span> GUÍA COMPLETA DE USUARIO - METS XML BUILDER</h1>
+
+    <div class="toc">
+        <h2><span class="emoji">📑</span> ÍNDICE</h2>
+        <ol>
+            <li><a href="#que-es">¿Qué es esta aplicación?</a></li>
+            <li><a href="#mets">¿Qué es METS y para qué sirve?</a></li>
+            <li><a href="#quien">¿Quién debe usar esta aplicación?</a></li>
+            <li><a href="#paso1">Paso 1: Metadatos Descriptivos (dmdSec)</a></li>
+            <li><a href="#paso2">Paso 2: Metadatos Administrativos (amdSec)</a></li>
+            <li><a href="#paso3">Paso 3: Sección de Ficheros (fileSec)</a></li>
+            <li><a href="#paso4">Paso 4: Mapa Estructural (structMap)</a></li>
+            <li><a href="#paso5">Paso 5: Generar y Descargar el XML</a></li>
+            <li><a href="#entregar">Cómo entregar al cliente</a></li>
+            <li><a href="#casos">Casos de uso prácticos</a></li>
+            <li><a href="#faq">Preguntas frecuentes</a></li>
+            <li><a href="#problemas">Solución de problemas</a></li>
+        </ol>
+    </div>
+
+    <hr>
+
+    <h2 id="que-es">¿Qué es esta aplicación?</h2>
+
+    <p><strong>METS XML Builder</strong> es una herramienta web que permite crear documentos XML METS de forma visual e intuitiva, sin necesidad de escribir código XML manualmente.</p>
+
+    <h3>¿Qué problema resuelve?</h3>
+
+    <p>En lugar de escribir esto manualmente:</p>
+
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;mets:mets xmlns:mets="http://www.loc.gov/METS/" ...&gt;
+  &lt;mets:dmdSec ID="dmd_0"&gt;
+    &lt;mets:mdWrap MDTYPE="DC"&gt;
+      &lt;mets:xmlData&gt;
+        &lt;dc:title&gt;El Quijote&lt;/dc:title&gt;
+        ...</code></pre>
+
+    <p>La aplicación te permite rellenar formularios sencillos y genera automáticamente el XML completo y válido.</p>
+
+    <hr>
+
+    <h2 id="mets">¿Qué es METS y para qué sirve?</h2>
+
+    <p><strong>METS</strong> = Metadata Encoding & Transmission Standard (Estándar de Codificación y Transmisión de Metadatos)</p>
+
+    <h3>¿Para qué se usa METS?</h3>
+
+    <p>METS es un <strong>estándar internacional</strong> creado por la Biblioteca del Congreso de EE.UU. para:</p>
+
+    <ol>
+        <li><strong>Describir objetos digitales complejos</strong> (libros escaneados, manuscritos, documentos históricos)</li>
+        <li><strong>Preservar patrimonio digital</strong> a largo plazo</li>
+        <li><strong>Intercambiar información</strong> entre bibliotecas y archivos digitales</li>
+        <li><strong>Estructurar colecciones</strong> de archivos digitales</li>
+    </ol>
+
+    <h3>Componentes de un documento METS</h3>
+
+    <p>Un documento METS contiene 4 secciones principales:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sección</th>
+                <th>Qué describe</th>
+                <th>Ejemplo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>dmdSec</strong> (Descriptive Metadata)</td>
+                <td><strong>QUÉ ES</strong> el objeto</td>
+                <td>"El Quijote, por Cervantes, 1605"</td>
+            </tr>
+            <tr>
+                <td><strong>amdSec</strong> (Administrative Metadata)</td>
+                <td><strong>CÓMO SE GESTIONA</strong></td>
+                <td>"Escaneado a 600dpi, Derechos: BNE"</td>
+            </tr>
+            <tr>
+                <td><strong>fileSec</strong> (File Section)</td>
+                <td><strong>QUÉ ARCHIVOS CONTIENE</strong></td>
+                <td>"portada.jpg, pagina1.jpg, pagina2.jpg"</td>
+            </tr>
+            <tr>
+                <td><strong>structMap</strong> (Structural Map)</td>
+                <td><strong>CÓMO SE ORGANIZAN</strong></td>
+                <td>"Portada → Capítulo 1 → Capítulo 2"</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="quien">¿Quién debe usar esta aplicación?</h2>
+
+    <p>Esta herramienta es ideal para:</p>
+
+    <ul>
+        <li>✅ <strong>Bibliotecarios digitales</strong> que digitalizan colecciones</li>
+        <li>✅ <strong>Archiveros</strong> que preservan documentos históricos</li>
+        <li>✅ <strong>Gestores de patrimonio cultural</strong> que crean repositorios digitales</li>
+        <li>✅ <strong>Estudiantes</strong> aprendiendo sobre metadatos digitales</li>
+        <li>✅ <strong>Desarrolladores</strong> que necesitan generar METS para sistemas de gestión documental</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="paso1">PASO 1: Metadatos Descriptivos (dmdSec)</h2>
+
+    <h3>¿Qué son los metadatos descriptivos?</h3>
+
+    <p>Son los datos que <strong>describen QUÉ ES</strong> tu objeto digital. Es como la ficha bibliográfica de un libro.</p>
+
+    <h3>Campos del formulario</h3>
+
+    <h4><span class="emoji">📌</span> Título del Objeto Digital (OBLIGATORIO)</h4>
+
+    <p><strong>¿Qué es?</strong> El nombre principal del documento u objeto que estás digitalizando.</p>
+
+    <p><strong>Cuándo usar:</strong></p>
+    <ul>
+        <li>Nombre del libro: "Don Quijote de la Mancha"</li>
+        <li>Título de un manuscrito: "Carta de Cristóbal Colón a los Reyes Católicos"</li>
+        <li>Nombre de una colección: "Fotografías de la Guerra Civil Española"</li>
+    </ul>
+
+    <div class="example">
+        <p><strong>Ejemplos:</strong></p>
+        <pre>✅ El Quijote
+✅ Constitución Española de 1978
+✅ Actas del Consejo Municipal de Madrid 1850-1900
+✅ Colección de Grabados del Museo del Prado
+❌ archivo.pdf (demasiado genérico)
+❌ documento1 (no descriptivo)</pre>
+    </div>
+
+    <h4><span class="emoji">📌</span> Autor/Creador (OBLIGATORIO)</h4>
+
+    <p><strong>¿Qué es?</strong> La persona u organización que creó el contenido original.</p>
+
+    <p><strong>Cuándo usar:</strong></p>
+    <ul>
+        <li>Autor de un libro: "Miguel de Cervantes Saavedra"</li>
+        <li>Fotógrafo: "Robert Capa"</li>
+        <li>Institución: "Real Academia Española"</li>
+        <li>Desconocido: "Anónimo" o "Autor desconocido"</li>
+    </ul>
+
+    <h4><span class="emoji">📌</span> Fecha de Creación/Publicación (OBLIGATORIO)</h4>
+
+    <p><strong>¿Qué es?</strong> Cuándo se creó o publicó el documento original.</p>
+
+    <p><strong>Formato:</strong> El navegador mostrará un selector de fecha. Selecciona la fecha más precisa que conozcas.</p>
+
+    <div class="note">
+        <p><strong>Nota:</strong> Si no conoces la fecha exacta, usa el 1 de enero del año aproximado.</p>
+    </div>
+
+    <h4><span class="emoji">📌</span> Asunto/Tema (OPCIONAL)</h4>
+
+    <p><strong>¿Qué es?</strong> De qué trata el documento. Palabras clave o categorías temáticas.</p>
+
+    <h4><span class="emoji">📌</span> Estándar de Metadatos (OBLIGATORIO)</h4>
+
+    <p><strong>¿Qué es?</strong> El formato en que se guardarán los metadatos en el XML.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Estándar</th>
+                <th>Cuándo usar</th>
+                <th>Nivel de detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Dublin Core (DC)</strong></td>
+                <td>Proyectos sencillos, descripciones básicas</td>
+                <td>Básico (15 campos estándar)</td>
+            </tr>
+            <tr>
+                <td><strong>MODS</strong></td>
+                <td>Proyectos profesionales, bibliotecas</td>
+                <td>Avanzado (mucha flexibilidad)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Recomendación:</strong></p>
+    <ul>
+        <li>🟢 <strong>Usa Dublin Core</strong> si estás empezando o tienes un proyecto simple</li>
+        <li>🟢 <strong>Usa MODS</strong> si trabajas en una institución profesional o necesitas más detalle</li>
+    </ul>
+
+    <div class="checklist">
+        <h3>✅ Checklist Sección 1</h3>
+        <p>Antes de continuar, verifica:</p>
+        <ul>
+            <li>☐ Has introducido un título descriptivo</li>
+            <li>☐ Has indicado el autor (o "Anónimo")</li>
+            <li>☐ Has seleccionado una fecha</li>
+            <li>☐ Has elegido un estándar de metadatos</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2 id="paso2">PASO 2: Metadatos Administrativos (amdSec)</h2>
+
+    <h3>¿Qué son los metadatos administrativos?</h3>
+
+    <p>Son los datos sobre <strong>CÓMO SE GESTIONA</strong> el objeto digital: quién tiene los derechos, cómo se digitalizó, qué acciones de preservación se han realizado.</p>
+
+    <h3>Campos del formulario</h3>
+
+    <h4><span class="emoji">📌</span> Titular de los Derechos (OBLIGATORIO)</h4>
+
+    <p><strong>¿Qué es?</strong> Quién posee los derechos de autor o custodia del objeto original.</p>
+
+    <div class="warning">
+        <p><strong>Importante:</strong> Este campo es crítico para cuestiones legales. Si no estás seguro, indica la institución que custodia el documento.</p>
+    </div>
+
+    <h4><span class="emoji">📌</span> Resolución de Escáner (OPCIONAL)</h4>
+
+    <p><strong>¿Qué es?</strong> La calidad técnica con la que se digitalizó el documento.</p>
+
+    <p><strong>Formato típico:</strong> <code>XXXdpi</code> (dots per inch = puntos por pulgada)</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Resolución</th>
+                <th>Tipo de contenido</th>
+                <th>Calidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>300dpi</strong></td>
+                <td>Documentos de texto simples</td>
+                <td>Básica</td>
+            </tr>
+            <tr>
+                <td><strong>400dpi</strong></td>
+                <td>Documentos con imágenes</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td><strong>600dpi</strong></td>
+                <td>Libros antiguos, manuscritos</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td><strong>1200dpi</strong></td>
+                <td>Documentos históricos valiosos</td>
+                <td>Muy alta</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4><span class="emoji">📌</span> Acciones de Preservación Digital (OPCIONAL)</h4>
+
+    <p><strong>¿Qué es?</strong> Qué procesos técnicos se aplicaron al digitalizar o preservar el documento.</p>
+
+    <div class="example">
+        <p><strong>Ejemplos comunes:</strong></p>
+        <pre>✅ Conversión a JPEG2000
+✅ OCR con Tesseract 4.0
+✅ Restauración digital con Adobe Photoshop
+✅ Conversión a PDF/A para preservación
+✅ Migración de formato TIFF a JPEG2000
+✅ Limpieza de manchas y restauración de color</pre>
+    </div>
+
+    <h4>Glosario rápido:</h4>
+    <ul>
+        <li><strong>OCR</strong> = Optical Character Recognition (convertir imagen a texto)</li>
+        <li><strong>JPEG2000</strong> = Formato de imagen de alta calidad para preservación</li>
+        <li><strong>PDF/A</strong> = Formato PDF específico para archivo a largo plazo</li>
+        <li><strong>TIFF</strong> = Formato sin pérdida de calidad</li>
+    </ul>
+
+    <div class="checklist">
+        <h3>✅ Checklist Sección 2</h3>
+        <p>Antes de continuar:</p>
+        <ul>
+            <li>☐ Has indicado quién posee los derechos</li>
+            <li>☐ Has rellenado los campos técnicos que conoces</li>
+            <li>☐ El estándar está en PREMIS</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2 id="paso3">PASO 3: Sección de Ficheros (fileSec)</h2>
+
+    <h3>¿Qué es la sección de ficheros?</h3>
+
+    <p>Es el <strong>inventario completo de todos los archivos</strong> que forman parte de tu objeto digital.</p>
+
+    <p>Si estás digitalizando un libro de 100 páginas, aquí añadirás los 100 archivos de imagen (uno por página).</p>
+
+    <h3>Cómo añadir archivos</h3>
+
+    <ol>
+        <li><strong>Haz clic en el botón "Seleccionar archivos"</strong> o "Choose Files"</li>
+        <li><strong>Selecciona uno o varios archivos</strong> de tu ordenador
+            <ul>
+                <li>Puedes seleccionar múltiples archivos manteniendo <code>Ctrl</code> (Windows) o <code>Cmd</code> (Mac)</li>
+            </ul>
+        </li>
+        <li><strong>Los archivos aparecerán listados</strong> con su nombre y tamaño</li>
+    </ol>
+
+    <h3>Información capturada automáticamente</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Dato</th>
+                <th>Ejemplo</th>
+                <th>Qué es</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Nombre</strong></td>
+                <td><code>portada.jpg</code></td>
+                <td>Nombre original del archivo</td>
+            </tr>
+            <tr>
+                <td><strong>Tamaño</strong></td>
+                <td><code>2.4 MB</code></td>
+                <td>Peso del archivo en kilobytes/megabytes</td>
+            </tr>
+            <tr>
+                <td><strong>Tipo MIME</strong></td>
+                <td><code>image/jpeg</code></td>
+                <td>Tipo de archivo técnico</td>
+            </tr>
+            <tr>
+                <td><strong>ID único</strong></td>
+                <td><code>file_1699123456_0</code></td>
+                <td>Identificador generado automáticamente</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="warning">
+        <h3>⚠️ IMPORTANTE: Limitación actual</h3>
+        <p><strong>La aplicación NO sube los archivos a ningún servidor.</strong></p>
+        <p>Solo captura la <strong>información de los archivos</strong> (nombre, tamaño, tipo). Los archivos permanecen en tu ordenador.</p>
+        <p><strong>Para uso en producción</strong>, necesitarías:</p>
+        <ol>
+            <li>Subir los archivos a un servidor</li>
+            <li>Reemplazar el nombre del archivo con la URL completa</li>
+        </ol>
+    </div>
+
+    <div class="checklist">
+        <h3>✅ Checklist Sección 3</h3>
+        <p>Antes de continuar:</p>
+        <ul>
+            <li>☐ Has añadido todos los archivos del objeto digital</li>
+            <li>☐ Los nombres de archivo son descriptivos</li>
+            <li>☐ Has verificado que no hay archivos duplicados</li>
+            <li>☐ Has eliminado archivos erróneos si los había</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2 id="paso4">PASO 4: Mapa Estructural (structMap)</h2>
+
+    <h3>¿Qué es el mapa estructural?</h3>
+
+    <p>Es la <strong>jerarquía y organización</strong> de tus archivos. Define cómo se relacionan entre sí.</p>
+
+    <p><strong>Analogía:</strong> Es como el <strong>índice de un libro</strong>, pero vinculando cada sección a sus archivos concretos.</p>
+
+    <h3>Cómo añadir una división estructural</h3>
+
+    <h4>Paso 4.1: Escribir la etiqueta</h4>
+
+    <p>En el campo <strong>"Etiqueta de la División"</strong>, escribe un nombre descriptivo.</p>
+
+    <h4>Paso 4.2: Asociar archivos</h4>
+
+    <p>En el campo <strong>"Asociar Archivos"</strong>:</p>
+    <ol>
+        <li>Mantén presionado <code>Ctrl</code> (Windows) o <code>Cmd</code> (Mac)</li>
+        <li>Haz clic en todos los archivos que pertenecen a esta división</li>
+        <li>Los archivos seleccionados se resaltarán</li>
+    </ol>
+
+    <h4>Paso 4.3: Añadir la división</h4>
+
+    <p>Haz clic en el botón azul <strong>"Añadir División"</strong>.</p>
+
+    <div class="note">
+        <h3>Orden de las divisiones</h3>
+        <p><strong>El orden es importante</strong> - debe reflejar la secuencia lógica del documento.</p>
+        <p>Usa los botones ⬆️ ⬇️ para reordenar.</p>
+    </div>
+
+    <div class="checklist">
+        <h3>✅ Checklist Sección 4</h3>
+        <p>Antes de continuar:</p>
+        <ul>
+            <li>☐ Has creado divisiones para todas las partes importantes</li>
+            <li>☐ Cada división tiene una etiqueta descriptiva</li>
+            <li>☐ Cada división tiene archivos asociados</li>
+            <li>☐ El orden de las divisiones es correcto</li>
+            <li>☐ Has usado los botones ⬆️⬇️ para ordenar si era necesario</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2 id="paso5">PASO 5: Generar y Descargar el XML</h2>
+
+    <h3>Validación previa</h3>
+
+    <p>Antes de generar, la aplicación verifica:</p>
+
+    <ul>
+        <li>✅ <strong>Requisito 1:</strong> Que hayas completado el título en Metadatos Descriptivos</li>
+        <li>✅ <strong>Requisito 2:</strong> Que hayas añadido al menos un archivo en Sección de Ficheros</li>
+    </ul>
+
+    <h3>Generar el XML</h3>
+
+    <ol>
+        <li><strong>Revisa todos los datos</strong> - una vez generado, tendrás que volver a completar el formulario para cambios</li>
+        <li><strong>Haz clic en el botón azul "Generar XML METS"</strong></li>
+        <li><strong>Espera unos segundos</strong> (el botón dirá "Generando...")</li>
+        <li><strong>El XML aparecerá en la sección "Resultado"</strong></li>
+    </ol>
+
+    <h3>Descargar el archivo XML</h3>
+
+    <ol>
+        <li><strong>Haz clic en el botón "Descargar XML"</strong></li>
+        <li>El navegador descargará automáticamente un archivo llamado: <code>mets_document.xml</code></li>
+        <li>El archivo se guardará en tu carpeta de descargas</li>
+    </ol>
+
+    <hr>
+
+    <h2 id="entregar">CÓMO ENTREGAR AL CLIENTE</h2>
+
+    <h3><span class="emoji">📦</span> Paquete de entrega estándar</h3>
+
+    <p>Cuando completes un proyecto METS para un cliente, entrega:</p>
+
+    <ol>
+        <li><strong>El archivo XML METS</strong> (<code>mets_document.xml</code>)
+            <ul>
+                <li>Renombra con un nombre descriptivo: <code>quijote_mets.xml</code></li>
+            </ul>
+        </li>
+        <li><strong>Carpeta con los archivos originales</strong></li>
+        <li><strong>Documento de metadatos</strong> (opcional pero recomendado)</li>
+        <li><strong>Informe técnico</strong> (para proyectos profesionales)</li>
+    </ol>
+
+    <h3><span class="emoji">💾</span> Formatos de entrega</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tamaño</th>
+                <th>Opciones de entrega</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Pequeño (&lt; 100 MB)</strong></td>
+                <td>Email, WeTransfer, Google Drive / Dropbox</td>
+            </tr>
+            <tr>
+                <td><strong>Mediano (100 MB - 5 GB)</strong></td>
+                <td>WeTransfer, Cloud storage, USB</td>
+            </tr>
+            <tr>
+                <td><strong>Grande (&gt; 5 GB)</strong></td>
+                <td>Disco duro externo, Servidor FTP, Cloud empresarial</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="checklist">
+        <h3><span class="emoji">📋</span> Checklist de entrega</h3>
+        <p>Antes de enviar al cliente:</p>
+        <ul>
+            <li>☐ El XML se valida correctamente</li>
+            <li>☐ Los nombres de archivo en el XML coinciden con los archivos reales</li>
+            <li>☐ Todos los archivos referenciados existen</li>
+            <li>☐ Los archivos están organizados en carpetas lógicas</li>
+            <li>☐ Has incluido documentación</li>
+            <li>☐ Has probado abrir el XML en un editor</li>
+            <li>☐ El nombre del archivo XML es descriptivo</li>
+            <li>☐ Has hecho una copia de seguridad</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2 id="casos">CASOS DE USO PRÁCTICOS</h2>
+
+    <div class="section-card">
+        <h3>Caso 1: Digitalización de un libro antiguo (50 páginas)</h3>
+        <p><strong>Contexto:</strong> Una biblioteca digitaliza un libro del siglo XVIII.</p>
+
+        <h4>Paso 1: Metadatos Descriptivos</h4>
+        <pre>Título: Tratado de Navegación Marítima
+Autor: Juan de la Cosa
+Fecha: 1500-01-01
+Asunto: Cartografía náutica - Historia de la navegación
+Estándar: MODS</pre>
+
+        <h4>Paso 2: Metadatos Administrativos</h4>
+        <pre>Titular de Derechos: Biblioteca Nacional de España
+Resolución de Escáner: 600dpi
+Acciones de Preservación: Conversión a JPEG2000, OCR
+Estándar: PREMIS</pre>
+    </div>
+
+    <div class="section-card">
+        <h3>Caso 2: Colección de fotografías históricas</h3>
+        <p><strong>Contexto:</strong> Un museo digitaliza 20 fotografías de la Guerra Civil Española.</p>
+
+        <h4>Paso 1: Metadatos Descriptivos</h4>
+        <pre>Título: Colección fotográfica - Guerra Civil Española 1936-1939
+Autor: Robert Capa
+Fecha: 1937-06-01
+Asunto: Fotografía documental - Historia contemporánea
+Estándar: Dublin Core</pre>
+    </div>
+
+    <hr>
+
+    <h2 id="faq">PREGUNTAS FRECUENTES</h2>
+
+    <h3>❓ ¿Puedo guardar mi trabajo para continuarlo después?</h3>
+    <p><strong>No, actualmente la aplicación no guarda automáticamente.</strong></p>
+    <p>Si recargas la página, perderás todo el progreso.</p>
+
+    <h3>❓ ¿Los archivos se suben a algún servidor?</h3>
+    <p><strong>No.</strong> Los archivos permanecen en tu ordenador. La aplicación solo captura información básica (nombre, tamaño, tipo).</p>
+
+    <h3>❓ ¿Puedo editar el XML después de generarlo?</h3>
+    <p><strong>Sí</strong>, pero tendrás que hacerlo manualmente con un editor de texto o XML.</p>
+
+    <h3>❓ ¿Qué formato debo elegir: Dublin Core o MODS?</h3>
+    <p><strong>Regla simple:</strong></p>
+    <ul>
+        <li><strong>Si tienes dudas → Dublin Core</strong></li>
+        <li><strong>Si trabajas en institución → Pregunta al responsable técnico</strong></li>
+    </ul>
+
+    <hr>
+
+    <h2 id="problemas">SOLUCIÓN DE PROBLEMAS</h2>
+
+    <div class="warning">
+        <h3>⚠️ Error: "Por favor, completa la sección de Metadatos Descriptivos"</h3>
+        <p><strong>Causa:</strong> El campo "Título" está vacío.</p>
+        <p><strong>Solución:</strong></p>
+        <ol>
+            <li>Ve al Paso 1</li>
+            <li>Completa el campo "Título del Objeto Digital"</li>
+            <li>Intenta generar de nuevo</li>
+        </ol>
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ El botón "Añadir División" está deshabilitado (gris)</h3>
+        <p><strong>Posibles causas:</strong></p>
+        <ol>
+            <li>No has escrito una etiqueta</li>
+            <li>No has seleccionado archivos</li>
+            <li>No hay archivos en la Sección de Ficheros</li>
+        </ol>
+    </div>
+
+    <hr>
+
+    <h2><span class="emoji">📚</span> GLOSARIO DE TÉRMINOS</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Término</th>
+                <th>Significado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>METS</strong></td>
+                <td>Metadata Encoding & Transmission Standard</td>
+            </tr>
+            <tr>
+                <td><strong>Dublin Core</strong></td>
+                <td>Estándar simple de 15 elementos para metadatos descriptivos</td>
+            </tr>
+            <tr>
+                <td><strong>MODS</strong></td>
+                <td>Metadata Object Description Schema</td>
+            </tr>
+            <tr>
+                <td><strong>PREMIS</strong></td>
+                <td>Preservation Metadata Implementation Strategies</td>
+            </tr>
+            <tr>
+                <td><strong>OCR</strong></td>
+                <td>Optical Character Recognition - Reconocimiento óptico de caracteres</td>
+            </tr>
+            <tr>
+                <td><strong>DPI</strong></td>
+                <td>Dots Per Inch - Puntos por pulgada</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>✅ RESUMEN RÁPIDO - 5 PASOS</h2>
+
+    <ol>
+        <li><strong>Metadatos Descriptivos</strong> → QUÉ ES (título, autor, fecha)</li>
+        <li><strong>Metadatos Administrativos</strong> → CÓMO SE GESTIONA (derechos, resolución)</li>
+        <li><strong>Sección de Ficheros</strong> → QUÉ ARCHIVOS (seleccionar archivos)</li>
+        <li><strong>Mapa Estructural</strong> → CÓMO SE ORGANIZAN (portada, capítulos, páginas)</li>
+        <li><strong>Generar y Descargar</strong> → OBTENER EL XML</li>
+    </ol>
+
+    <p><strong>Tiempo estimado:</strong> 15-30 minutos (depende del número de archivos)</p>
+
+    <hr>
+
+    <div style="text-align: center; color: #6b7280; margin-top: 60px;">
+        <p><strong>Versión de la guía:</strong> 1.0</p>
+        <p><strong>Última actualización:</strong> Noviembre 2025</p>
+        <p><strong>Aplicación:</strong> METS XML Builder</p>
+    </div>
+
+</body>
+</html>
