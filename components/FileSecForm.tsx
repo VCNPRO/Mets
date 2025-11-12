@@ -6,6 +6,9 @@ import { analyzeFiles } from '../services/fileAnalyzer';
 import { exportToCSV, exportToExcel, exportToJSON } from '../services/exportService';
 import { addFilesToLibrary } from '../services/fileLibrary';
 import FileLibrary from './FileLibrary';
+import AIAnalysisOptions from './AIAnalysisOptions';
+import AIConfig from './AIConfig';
+import { analyzeFileWithAI, AIAnalysisOptions as AIOptions, downloadGeneratedFile } from '../services/aiAnalysis';
 
 interface FileSecFormProps {
   files: FileEntry[];
@@ -19,6 +22,13 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+
+  // AI Analysis states
+  const [showAIOptions, setShowAIOptions] = useState(false);
+  const [showAIConfig, setShowAIConfig] = useState(false);
+  const [selectedFileForAI, setSelectedFileForAI] = useState<{ file: File; fileEntry: FileEntry } | null>(null);
+  const [aiAnalyzing, setAIAnalyzing] = useState(false);
+  const [aiProgress, setAIProgress] = useState<{ stage: string; message: string } | null>(null);
 
   const processFiles = async (fileList: FileList | File[]) => {
     setAnalyzing(true);
@@ -82,6 +92,47 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
     }
   };
 
+  // Handle AI Analysis
+  const handleAnalyzeWithAI = async (file: File, fileEntry: FileEntry, options: AIOptions) => {
+    setAIAnalyzing(true);
+    setAIProgress({ stage: 'init', message: 'Iniciando análisis con IA...' });
+
+    try {
+      const { aiMetadata, generatedFiles } = await analyzeFileWithAI(
+        file,
+        options,
+        (stage, message) => {
+          setAIProgress({ stage, message });
+        }
+      );
+
+      // Update the file entry with AI metadata
+      const updatedFiles = files.map(f =>
+        f.id === fileEntry.id
+          ? { ...f, aiMetadata, aiGeneratedFiles: generatedFiles }
+          : f
+      );
+
+      // Call onAddFiles with updated files (this will trigger a state update in parent)
+      onAddFiles(updatedFiles.filter(f => f.id === fileEntry.id));
+
+      setAIProgress({ stage: 'complete', message: '✅ Análisis completado con éxito!' });
+
+      setTimeout(() => {
+        setAIAnalyzing(false);
+        setAIProgress(null);
+      }, 2000);
+    } catch (error: any) {
+      console.error('AI analysis error:', error);
+      setAIProgress({ stage: 'error', message: `❌ Error: ${error.message}` });
+
+      setTimeout(() => {
+        setAIAnalyzing(false);
+        setAIProgress(null);
+      }, 3000);
+    }
+  };
+
   return (
     <div>
       {/* Library Button */}
@@ -141,6 +192,23 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
           <p className="text-sm text-blue-600 mt-2">
             Extrayendo metadatos EXIF, calculando checksums (MD5, SHA-256)...
           </p>
+        </div>
+      )}
+
+      {/* AI Analysis Progress */}
+      {aiAnalyzing && aiProgress && (
+        <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-md">
+          <p className="text-purple-700 font-semibold mb-2">
+            🤖 Análisis con IA en progreso...
+          </p>
+          <p className="text-sm text-purple-600 mt-2">
+            {aiProgress.message}
+          </p>
+          {aiProgress.stage !== 'complete' && aiProgress.stage !== 'error' && (
+            <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+              <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '70%' }} />
+            </div>
+          )}
         </div>
       )}
 
@@ -236,10 +304,73 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
                         )}
                       </div>
                     )}
+
+                    {/* AI Metadata */}
+                    {file.aiMetadata && (
+                      <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                        <div className="text-xs font-semibold text-purple-900 mb-2">🤖 Análisis con IA</div>
+
+                        {file.aiMetadata.transcription && (
+                          <div className="mb-2">
+                            <div className="text-xs text-purple-800">
+                              <strong>Transcripción:</strong> {file.aiMetadata.transcription.text.substring(0, 150)}
+                              {file.aiMetadata.transcription.text.length > 150 && '...'}
+                            </div>
+                            <div className="text-xs text-purple-600 mt-1">
+                              Idioma: {file.aiMetadata.transcription.language} • Confianza: {(file.aiMetadata.transcription.confidence * 100).toFixed(1)}%
+                            </div>
+                          </div>
+                        )}
+
+                        {file.aiMetadata.analysis && (
+                          <div className="text-xs text-purple-800 space-y-1">
+                            <div><strong>Resumen:</strong> {file.aiMetadata.analysis.summary}</div>
+                            <div><strong>Keywords:</strong> {file.aiMetadata.analysis.keywords.join(', ')}</div>
+                            {file.aiMetadata.analysis.entities && file.aiMetadata.analysis.entities.length > 0 && (
+                              <div><strong>Entidades:</strong> {file.aiMetadata.analysis.entities.map(e => e.name).join(', ')}</div>
+                            )}
+                          </div>
+                        )}
+
+                        {file.aiGeneratedFiles && file.aiGeneratedFiles.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {file.aiGeneratedFiles.map((genFile, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => downloadGeneratedFile(genFile)}
+                                className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                              >
+                                ⬇️ {genFile.fileName}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <Button variant="danger" onClick={() => onRemoveFile(file.id)} className="ml-4 p-1 text-xs">
-                    Eliminar
-                  </Button>
+
+                  {/* Action Buttons */}
+                  <div className="ml-4 flex flex-col gap-1">
+                    {/* AI Analysis Button - only for audio/video */}
+                    {(file.mimeType.startsWith('audio/') || file.mimeType.startsWith('video/')) && !file.aiMetadata && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          // We need the actual File object, but we don't have it in FileEntry
+                          // For now, show a message that they need to re-upload
+                          // In production, you'd want to store File references or implement re-upload
+                          alert('Para analizar con IA, por favor vuelve a cargar el archivo');
+                        }}
+                        className="p-1 text-xs whitespace-nowrap"
+                        disabled={aiAnalyzing}
+                      >
+                        🤖 IA
+                      </Button>
+                    )}
+                    <Button variant="danger" onClick={() => onRemoveFile(file.id)} className="p-1 text-xs">
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -252,6 +383,34 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         isOpen={showLibrary}
         onClose={() => setShowLibrary(false)}
         onAddFiles={onAddFiles}
+      />
+
+      {/* AI Analysis Options Modal */}
+      {selectedFileForAI && (
+        <AIAnalysisOptions
+          isOpen={showAIOptions}
+          fileName={selectedFileForAI.fileEntry.name}
+          fileType={selectedFileForAI.fileEntry.mimeType}
+          onClose={() => {
+            setShowAIOptions(false);
+            setSelectedFileForAI(null);
+          }}
+          onAnalyze={(options) => {
+            if (selectedFileForAI) {
+              handleAnalyzeWithAI(selectedFileForAI.file, selectedFileForAI.fileEntry, options);
+            }
+          }}
+          onConfigureAPI={() => {
+            setShowAIOptions(false);
+            setShowAIConfig(true);
+          }}
+        />
+      )}
+
+      {/* AI Config Modal */}
+      <AIConfig
+        isOpen={showAIConfig}
+        onClose={() => setShowAIConfig(false)}
       />
     </div>
   );

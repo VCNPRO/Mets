@@ -71,6 +71,53 @@ export interface MediaMetadata {
   aspectRatio?: string; // e.g., "16:9", "4:3"
 }
 
+// AI-generated metadata
+export interface AIMetadata {
+  // Transcription
+  transcription?: {
+    text: string;
+    language: string;
+    confidence: number; // 0-1
+    model: string; // e.g., "whisper-large-v3"
+    generatedAt: string; // ISO date
+    segments?: Array<{
+      start: number; // seconds
+      end: number; // seconds
+      text: string;
+    }>;
+  };
+
+  // Content analysis (Gemini)
+  analysis?: {
+    summary: string;
+    keywords: string[];
+    topics: string[];
+    sentiment?: 'positive' | 'negative' | 'neutral';
+    entities?: Array<{
+      name: string;
+      type: string; // person, organization, location, etc.
+    }>;
+    model: string; // e.g., "gemini-pro"
+    generatedAt: string; // ISO date
+  };
+
+  // Scene detection
+  scenes?: Array<{
+    start: number; // seconds
+    end: number; // seconds
+    description?: string;
+  }>;
+}
+
+// AI-generated derived files
+export interface AIGeneratedFile {
+  type: 'transcription' | 'analysis' | 'subtitles';
+  format: 'srt' | 'vtt' | 'json' | 'txt';
+  content: string;
+  fileName: string;
+  generatedAt: string;
+}
+
 export interface FileEntry {
   id: string; // Unique ID for the file in METS
   name: string; // Original file name
@@ -86,6 +133,9 @@ export interface FileEntry {
   imageTech?: ImageTechMetadata;
   exif?: ExifMetadata;
   media?: MediaMetadata;
+  // AI-generated metadata
+  aiMetadata?: AIMetadata;
+  aiGeneratedFiles?: AIGeneratedFile[];
   // File grouping
   use?: 'master' | 'derivative' | 'thumbnail' | 'archive';
 }
