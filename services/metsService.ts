@@ -72,14 +72,64 @@ const generateDublinCore = (data: DmdSecData): string => {
 };
 
 /**
+ * Generate AI content analysis metadata for dmdSec
+ */
+const generateAIContentMetadata = (files: FileEntry[]): string => {
+  const filesWithAI = files.filter(f => f.aiMetadata?.analysis);
+  if (filesWithAI.length === 0) return '';
+
+  // Aggregate all AI-generated metadata
+  const allKeywords = new Set<string>();
+  const allTopics = new Set<string>();
+  const allEntities: Array<{ name: string; type: string }> = [];
+  const summaries: string[] = [];
+
+  filesWithAI.forEach(file => {
+    const analysis = file.aiMetadata?.analysis;
+    if (analysis) {
+      analysis.keywords.forEach(kw => allKeywords.add(kw));
+      analysis.topics.forEach(topic => allTopics.add(topic));
+      if (analysis.entities) {
+        allEntities.push(...analysis.entities);
+      }
+      summaries.push(`[${file.name}] ${analysis.summary}`);
+    }
+  });
+
+  const dmdAIId = generateUniqueId('dmd_ai');
+
+  return `
+    <mets:dmdSec ID="${dmdAIId}">
+        <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="AI_ANALYSIS" LABEL="AI-Generated Content Analysis">
+            <mets:xmlData>
+                <ai:analysis xmlns:ai="http://www.example.com/aiMetadata">
+                    ${summaries.length > 0 ? `<ai:summaries>
+                        ${summaries.map((s, idx) => `<ai:summary index="${idx + 1}">${escapeXml(s)}</ai:summary>`).join('\n                        ')}
+                    </ai:summaries>` : ''}
+                    ${allKeywords.size > 0 ? `<ai:keywords>
+                        ${Array.from(allKeywords).map(kw => `<ai:keyword>${escapeXml(kw)}</ai:keyword>`).join('\n                        ')}
+                    </ai:keywords>` : ''}
+                    ${allTopics.size > 0 ? `<ai:topics>
+                        ${Array.from(allTopics).map(topic => `<ai:topic>${escapeXml(topic)}</ai:topic>`).join('\n                        ')}
+                    </ai:topics>` : ''}
+                    ${allEntities.length > 0 ? `<ai:entities>
+                        ${allEntities.map(entity => `<ai:entity type="${escapeXml(entity.type)}">${escapeXml(entity.name)}</ai:entity>`).join('\n                        ')}
+                    </ai:entities>` : ''}
+                </ai:analysis>
+            </mets:xmlData>
+        </mets:mdWrap>
+    </mets:dmdSec>`;
+};
+
+/**
  * Generate Descriptive Metadata Section (dmdSec)
  */
-const generateDmdSec = (data: DmdSecData | null): string => {
+const generateDmdSec = (data: DmdSecData | null, files: FileEntry[]): string => {
   if (!data) return '';
 
   const dmdSecId = generateUniqueId('dmd');
 
-  return `
+  const dcMetadata = `
     <mets:dmdSec ID="${dmdSecId}">
         <mets:mdWrap MDTYPE="${data.metadataStandard === 'DublinCore' ? 'DC' : 'MODS'}">
             <mets:xmlData>
@@ -92,6 +142,11 @@ const generateDmdSec = (data: DmdSecData | null): string => {
             </mets:xmlData>
         </mets:mdWrap>
     </mets:dmdSec>`;
+
+  // Add AI-generated content metadata if available
+  const aiMetadata = generateAIContentMetadata(files);
+
+  return dcMetadata + aiMetadata;
 };
 
 /**
@@ -157,6 +212,125 @@ const generateTechMD = (file: FileEntry): string => {
 };
 
 /**
+ * Generate AI transcription metadata for sourceMD
+ */
+const generateAITranscriptionMD = (file: FileEntry): string => {
+  if (!file.aiMetadata?.transcription) return '';
+
+  const sourceMDId = generateUniqueId('source');
+  const trans = file.aiMetadata.transcription;
+
+  return `
+        <mets:sourceMD ID="${sourceMDId}">
+            <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="AI_TRANSCRIPTION" LABEL="AI Transcription (${trans.model})">
+                <mets:xmlData>
+                    <ai:transcription xmlns:ai="http://www.example.com/aiMetadata">
+                        <ai:fullText>${escapeXml(trans.text)}</ai:fullText>
+                        <ai:language>${escapeXml(trans.language)}</ai:language>
+                        <ai:confidence>${trans.confidence}</ai:confidence>
+                        <ai:model>${escapeXml(trans.model)}</ai:model>
+                        <ai:generatedAt>${trans.generatedAt}</ai:generatedAt>
+                        ${trans.segments && trans.segments.length > 0 ? `
+                        <ai:segments>
+                            ${trans.segments.map((seg, idx) => `
+                            <ai:segment index="${idx + 1}">
+                                <ai:start>${seg.start}</ai:start>
+                                <ai:end>${seg.end}</ai:end>
+                                <ai:text>${escapeXml(seg.text)}</ai:text>
+                            </ai:segment>`).join('')}
+                        </ai:segments>` : ''}
+                    </ai:transcription>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:sourceMD>`;
+};
+
+/**
+ * Generate PREMIS events for AI processing
+ */
+const generateAIProcessingEvents = (files: FileEntry[]): string => {
+  const filesWithAI = files.filter(f => f.aiMetadata);
+  if (filesWithAI.length === 0) return '';
+
+  const events: string[] = [];
+
+  filesWithAI.forEach(file => {
+    const ai = file.aiMetadata!;
+
+    // Transcription event
+    if (ai.transcription) {
+      const eventId = generateUniqueId('event');
+      events.push(`
+                    <premis:event xmlns:premis="http://www.loc.gov/premis/v3">
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>local</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>${eventId}</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>transcription</premis:eventType>
+                        <premis:eventDateTime>${ai.transcription.generatedAt}</premis:eventDateTime>
+                        <premis:eventDetail>Automatic speech-to-text transcription of file "${escapeXml(file.name)}" using ${escapeXml(ai.transcription.model)}</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>success</premis:eventOutcome>
+                            <premis:eventOutcomeDetail>
+                                <premis:eventOutcomeDetailNote>Language: ${escapeXml(ai.transcription.language)}, Confidence: ${ai.transcription.confidence}</premis:eventOutcomeDetailNote>
+                            </premis:eventOutcomeDetail>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>service</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>${escapeXml(ai.transcription.model)}</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                        <premis:linkingObjectIdentifier>
+                            <premis:linkingObjectIdentifierType>local</premis:linkingObjectIdentifierType>
+                            <premis:linkingObjectIdentifierValue>${file.id}</premis:linkingObjectIdentifierValue>
+                        </premis:linkingObjectIdentifier>
+                    </premis:event>`);
+    }
+
+    // Content analysis event
+    if (ai.analysis) {
+      const eventId = generateUniqueId('event');
+      events.push(`
+                    <premis:event xmlns:premis="http://www.loc.gov/premis/v3">
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>local</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>${eventId}</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>metadata extraction</premis:eventType>
+                        <premis:eventDateTime>${ai.analysis.generatedAt}</premis:eventDateTime>
+                        <premis:eventDetail>AI content analysis of file "${escapeXml(file.name)}" using ${escapeXml(ai.analysis.model)}</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>success</premis:eventOutcome>
+                            <premis:eventOutcomeDetail>
+                                <premis:eventOutcomeDetailNote>Extracted ${ai.analysis.keywords.length} keywords, ${ai.analysis.topics.length} topics, ${ai.analysis.entities?.length || 0} entities. Sentiment: ${escapeXml(ai.analysis.sentiment || 'neutral')}</premis:eventOutcomeDetailNote>
+                            </premis:eventOutcomeDetail>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>service</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>${escapeXml(ai.analysis.model)}</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                        <premis:linkingObjectIdentifier>
+                            <premis:linkingObjectIdentifierType>local</premis:linkingObjectIdentifierType>
+                            <premis:linkingObjectIdentifierValue>${file.id}</premis:linkingObjectIdentifierValue>
+                        </premis:linkingObjectIdentifier>
+                    </premis:event>`);
+    }
+  });
+
+  if (events.length === 0) return '';
+
+  const digiprovAIId = generateUniqueId('digiprov_ai');
+
+  return `
+        <mets:digiprovMD ID="${digiprovAIId}">
+            <mets:mdWrap MDTYPE="PREMIS">
+                <mets:xmlData>
+                    ${events.join('')}
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:digiprovMD>`;
+};
+
+/**
  * Generate Administrative Metadata Section (amdSec)
  */
 const generateAmdSec = (data: AmdSecData | null, files: FileEntry[]): string => {
@@ -172,9 +346,19 @@ const generateAmdSec = (data: AmdSecData | null, files: FileEntry[]): string => 
     .map(file => generateTechMD(file))
     .join('');
 
+  // Generate sourceMD for transcriptions
+  const sourceMDs = files
+    .filter(file => file.aiMetadata?.transcription)
+    .map(file => generateAITranscriptionMD(file))
+    .join('');
+
+  // Generate PREMIS events for AI processing
+  const aiProcessingEvents = generateAIProcessingEvents(files);
+
   return `
     <mets:amdSec ID="${amdSecId}">
         ${techMDs}
+        ${sourceMDs}
         ${data ? `
         <mets:rightsMD ID="${rightsId}">
             <mets:mdWrap MDTYPE="OTHER" OTHERMDTYPE="RIGHTS">
@@ -198,6 +382,7 @@ const generateAmdSec = (data: AmdSecData | null, files: FileEntry[]): string => 
                 </mets:xmlData>
             </mets:mdWrap>
         </mets:digiprovMD>` : ''}
+        ${aiProcessingEvents}
     </mets:amdSec>`;
 };
 
@@ -266,7 +451,7 @@ export const generateMetsXml = (data: MetsState): string => {
   idCounter = 0; // Reset counter
 
   const metsHdr = generateMetsHdr(data.metsHdr);
-  const dmdSec = generateDmdSec(data.dmdSec);
+  const dmdSec = generateDmdSec(data.dmdSec, data.fileSec);
   const amdSec = generateAmdSec(data.amdSec, data.fileSec);
   const fileSec = generateFileSec(data.fileSec);
   const structMap = generateStructMap(data.structMap);
@@ -281,6 +466,7 @@ export const generateMetsXml = (data: MetsState): string => {
            xmlns:premis="http://www.loc.gov/premis/v3"
            xmlns:rights="http://www.example.com/rightsMD"
            xmlns:tech="http://www.example.com/techMD"
+           xmlns:ai="http://www.example.com/aiMetadata"
            xsi:schemaLocation="http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd
                                http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/simpledc20021212.xsd
                                http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd
