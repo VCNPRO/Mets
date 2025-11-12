@@ -12,6 +12,7 @@ import StructMapForm from './components/StructMapForm';
 import MetsOutput from './components/MetsOutput';
 import Button from './components/Button';
 import TemplateSelector from './components/TemplateSelector';
+import ChatbotWidget from './components/ChatbotWidget';
 import { generateMetsXml } from './services/metsService';
 import { applyTemplate } from './services/templates';
 
@@ -299,6 +300,7 @@ const App: React.FC = () => {
         </SectionCard>
       </main>
       <Footer />
+      <ChatbotWidget />
     </div>
   );
 };
