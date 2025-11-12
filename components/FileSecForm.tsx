@@ -1,7 +1,8 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { FileEntry } from '../types';
 import Button from './Button';
+import { analyzeFiles } from '../services/fileAnalyzer';
 
 interface FileSecFormProps {
   files: FileEntry[];
@@ -11,19 +12,37 @@ interface FileSecFormProps {
 
 const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFile }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      // Fix: Explicitly type 'file' as File to access its properties.
-      const newFileEntries: FileEntry[] = Array.from(e.target.files).map((file: File, index) => ({
-        id: `file_${Date.now()}_${index}`, // Simple unique ID
-        name: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        size: file.size,
-      }));
-      onAddFiles(newFileEntries);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear the input
+      setAnalyzing(true);
+      setProgress({ current: 0, total: e.target.files.length });
+
+      try {
+        const filesArray = Array.from(e.target.files);
+        const analyzedFiles = await analyzeFiles(filesArray, (current, total) => {
+          setProgress({ current, total });
+        });
+
+        onAddFiles(analyzedFiles);
+      } catch (error) {
+        console.error('Error analyzing files:', error);
+        // Fallback to basic file entries
+        const basicEntries: FileEntry[] = Array.from(e.target.files).map((file: File, index) => ({
+          id: `file_${Date.now()}_${index}`,
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: file.size,
+        }));
+        onAddFiles(basicEntries);
+      } finally {
+        setAnalyzing(false);
+        setProgress({ current: 0, total: 0 });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };
@@ -34,28 +53,89 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         type="file"
         multiple
         onChange={handleFileChange}
+        disabled={analyzing}
         className="block w-full text-sm text-gray-500
                    file:mr-4 file:py-2 file:px-4
                    file:rounded-md file:border-0
                    file:text-sm file:font-semibold
                    file:bg-blue-50 file:text-blue-700
-                   hover:file:bg-blue-100 mb-4"
+                   hover:file:bg-blue-100 mb-4
+                   disabled:opacity-50 disabled:cursor-not-allowed"
         ref={fileInputRef}
       />
+
+      {analyzing && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-blue-700 font-semibold mb-2">
+            Analizando archivos... {progress.current} / {progress.total}
+          </p>
+          <div className="w-full bg-blue-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(progress.current / progress.total) * 100}%` }}
+            />
+          </div>
+          <p className="text-sm text-blue-600 mt-2">
+            Extrayendo metadatos EXIF, calculando checksums (MD5, SHA-256)...
+          </p>
+        </div>
+      )}
 
       {files.length === 0 ? (
         <p className="text-gray-500 italic">No se han añadido archivos.</p>
       ) : (
-        <ul className="border border-gray-200 rounded-md divide-y divide-gray-200 mt-4">
-          {files.map((file) => (
-            <li key={file.id} className="p-4 flex items-center justify-between">
-              <span className="text-gray-700">{file.name} ({Math.round(file.size / 1024)} KB)</span>
-              <Button variant="danger" onClick={() => onRemoveFile(file.id)} className="ml-4 p-1 text-xs">
-                Eliminar
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <p className="text-sm text-gray-600 mb-2">
+            {files.length} archivo{files.length !== 1 ? 's' : ''} cargado{files.length !== 1 ? 's' : ''}
+          </p>
+          <ul className="border border-gray-200 rounded-md divide-y divide-gray-200">
+            {files.map((file) => (
+              <li key={file.id} className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700 font-medium">{file.name}</span>
+                      <span className="text-xs px-2 py-1 bg-gray-100 rounded">{file.use}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      {Math.round(file.size / 1024)} KB • {file.mimeType}
+                    </div>
+                    {file.md5 && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div><strong>MD5:</strong> <code className="bg-gray-100 px-1 rounded">{file.md5.substring(0, 16)}...</code></div>
+                        <div><strong>SHA-256:</strong> <code className="bg-gray-100 px-1 rounded">{file.sha256?.substring(0, 16)}...</code></div>
+                      </div>
+                    )}
+                    {file.imageTech && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        📐 {file.imageTech.width} × {file.imageTech.height}px
+                        {file.imageTech.xResolution && ` • ${file.imageTech.xResolution}dpi`}
+                        {file.imageTech.colorSpace && ` • ${file.imageTech.colorSpace}`}
+                      </div>
+                    )}
+                    {file.exif && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        📷 {file.exif.make} {file.exif.model}
+                        {file.exif.fNumber && ` • f/${file.exif.fNumber}`}
+                        {file.exif.exposureTime && ` • ${file.exif.exposureTime}`}
+                        {file.exif.iso && ` • ISO ${file.exif.iso}`}
+                      </div>
+                    )}
+                    {file.media && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        🎬 {file.media.duration?.toFixed(2)}s
+                        {file.media.bitrate && ` • ${Math.round(file.media.bitrate / 1000)}kbps`}
+                      </div>
+                    )}
+                  </div>
+                  <Button variant="danger" onClick={() => onRemoveFile(file.id)} className="ml-4 p-1 text-xs">
+                    Eliminar
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

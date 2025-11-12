@@ -1,9 +1,10 @@
 
 import React, { useState, useCallback } from 'react';
-import { MetsState, DmdSecData, AmdSecData, FileEntry, StructMapItem } from './types';
+import { MetsState, DmdSecData, AmdSecData, FileEntry, StructMapItem, MetsHdrData } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import SectionCard from './components/SectionCard';
+import MetsHdrForm from './components/MetsHdrForm';
 import DmdSecForm from './components/DmdSecForm';
 import AmdSecForm from './components/AmdSecForm';
 import FileSecForm from './components/FileSecForm';
@@ -14,14 +15,21 @@ import { generateMetsXml } from './services/metsService';
 
 const App: React.FC = () => {
   const [metsState, setMetsState] = useState<MetsState>({
+    metsHdr: null,
     dmdSec: null,
     amdSec: null,
     fileSec: [],
-    structMap: [],
+    structMaps: [],
+    structLinks: [],
+    structMap: [], // deprecated but kept for compatibility
   });
   const [generatedXml, setGeneratedXml] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleMetsHdrChange = useCallback((data: MetsHdrData) => {
+    setMetsState(prevState => ({ ...prevState, metsHdr: data }));
+  }, []);
 
   const handleDmdSecChange = useCallback((data: DmdSecData) => {
     setMetsState(prevState => ({ ...prevState, dmdSec: data }));
@@ -57,7 +65,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      // Basic validation: at least dmdSec and fileSec must be somewhat populated
+      // Basic validation
       if (!metsState.dmdSec || !metsState.dmdSec.title.trim()) {
         throw new Error('Por favor, completa la sección de Metadatos Descriptivos.');
       }
@@ -65,8 +73,18 @@ const App: React.FC = () => {
         throw new Error('Por favor, añade al menos un archivo en la Sección de Ficheros.');
       }
 
-      const xml = generateMetsXml(metsState);
+      // Update lastModDate in metsHdr
+      const updatedState = {
+        ...metsState,
+        metsHdr: metsState.metsHdr ? {
+          ...metsState.metsHdr,
+          lastModDate: new Date().toISOString(),
+        } : null,
+      };
+
+      const xml = generateMetsXml(updatedState);
       setGeneratedXml(xml);
+      setMetsState(updatedState); // Update state with new lastModDate
     } catch (e: any) {
       console.error('Error al generar XML METS:', e);
       setError(e.message || 'Error desconocido al generar XML METS.');
@@ -74,7 +92,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [metsState]); // Dependency on metsState
+  }, [metsState]);
 
   const handleDownloadXml = useCallback(() => {
     if (generatedXml) {
@@ -100,6 +118,12 @@ const App: React.FC = () => {
             <span className="block sm:inline">{error}</span>
           </div>
         )}
+
+        <SectionCard
+          title="0. Encabezado METS (metsHdr)"
+          description="Información sobre el documento METS mismo (fechas, agente responsable, estado).">
+          <MetsHdrForm data={metsState.metsHdr} onChange={handleMetsHdrChange} />
+        </SectionCard>
 
         <SectionCard
           title="1. Metadatos Descriptivos (dmdSec)"
