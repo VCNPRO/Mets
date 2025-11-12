@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { MetsState, DmdSecData, AmdSecData, FileEntry, StructMapItem, MetsHdrData } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -11,9 +11,12 @@ import FileSecForm from './components/FileSecForm';
 import StructMapForm from './components/StructMapForm';
 import MetsOutput from './components/MetsOutput';
 import Button from './components/Button';
+import TemplateSelector from './components/TemplateSelector';
 import { generateMetsXml } from './services/metsService';
+import { applyTemplate } from './services/templates';
 
 const App: React.FC = () => {
+  const [showTemplateSelector, setShowTemplateSelector] = useState<boolean>(false);
   const [metsState, setMetsState] = useState<MetsState>({
     metsHdr: null,
     dmdSec: null,
@@ -26,6 +29,89 @@ const App: React.FC = () => {
   const [generatedXml, setGeneratedXml] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [projectName, setProjectName] = useState<string>('Proyecto METS');
+
+  // Load project from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('metsProject');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.metsState) {
+          setMetsState(parsed.metsState);
+          setProjectName(parsed.projectName || 'Proyecto METS');
+        }
+      } catch (e) {
+        console.error('Error loading saved project:', e);
+      }
+    }
+  }, []);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      localStorage.setItem('metsProject', JSON.stringify({
+        metsState,
+        projectName,
+        savedAt: new Date().toISOString(),
+      }));
+    }, 1000); // Debounce 1 second
+
+    return () => clearTimeout(saveTimeout);
+  }, [metsState, projectName]);
+
+  const handleSelectTemplate = useCallback((templateId: string) => {
+    const templateData = applyTemplate(templateId);
+    setMetsState(prevState => ({
+      ...prevState,
+      ...templateData,
+    }));
+    setShowTemplateSelector(false);
+  }, []);
+
+  const handleSaveProject = useCallback(() => {
+    const projectData = {
+      metsState,
+      projectName,
+      savedAt: new Date().toISOString(),
+    };
+    const dataStr = JSON.stringify(projectData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [metsState, projectName]);
+
+  const handleLoadProject = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.metsState) {
+          setMetsState(parsed.metsState);
+          setProjectName(parsed.projectName || 'Proyecto METS');
+        }
+      } catch (error) {
+        setError('Error al cargar el proyecto. Archivo inválido.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  }, []);
+
+  const handleNewProject = useCallback(() => {
+    if (confirm('¿Estás seguro de que quieres crear un nuevo proyecto? Los cambios no guardados se perderán.')) {
+      setShowTemplateSelector(true);
+    }
+  }, []);
 
   const handleMetsHdrChange = useCallback((data: MetsHdrData) => {
     setMetsState(prevState => ({ ...prevState, metsHdr: data }));
@@ -111,7 +197,49 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
+
+      {showTemplateSelector && (
+        <TemplateSelector
+          onSelectTemplate={handleSelectTemplate}
+          onClose={() => setShowTemplateSelector(false)}
+        />
+      )}
+
       <main className="flex-grow container mx-auto px-4 py-8">
+        {/* Project Controls */}
+        <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow">
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="text-xl font-bold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2"
+            />
+            <span className="text-sm text-gray-500">
+              {metsState.fileSec.length} archivos • Auto-guardado
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleNewProject}>
+              🎨 Nueva Plantilla
+            </Button>
+            <Button variant="secondary" onClick={handleSaveProject}>
+              💾 Guardar Proyecto
+            </Button>
+            <label className="cursor-pointer">
+              <span className="px-4 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-300 text-gray-800 hover:bg-gray-400 focus:ring-gray-500 inline-block">
+                📂 Cargar Proyecto
+              </span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleLoadProject}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
             <strong className="font-bold">Error: </strong>

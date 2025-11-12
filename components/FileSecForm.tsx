@@ -14,53 +14,97 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFiles = async (fileList: FileList | File[]) => {
+    setAnalyzing(true);
+    const filesArray = Array.from(fileList);
+    setProgress({ current: 0, total: filesArray.length });
+
+    try {
+      const analyzedFiles = await analyzeFiles(filesArray, (current, total) => {
+        setProgress({ current, total });
+      });
+
+      onAddFiles(analyzedFiles);
+    } catch (error) {
+      console.error('Error analyzing files:', error);
+      // Fallback to basic file entries
+      const basicEntries: FileEntry[] = filesArray.map((file: File, index) => ({
+        id: `file_${Date.now()}_${index}`,
+        name: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        size: file.size,
+      }));
+      onAddFiles(basicEntries);
+    } finally {
+      setAnalyzing(false);
+      setProgress({ current: 0, total: 0 });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setAnalyzing(true);
-      setProgress({ current: 0, total: e.target.files.length });
+      await processFiles(e.target.files);
+    }
+  };
 
-      try {
-        const filesArray = Array.from(e.target.files);
-        const analyzedFiles = await analyzeFiles(filesArray, (current, total) => {
-          setProgress({ current, total });
-        });
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
-        onAddFiles(analyzedFiles);
-      } catch (error) {
-        console.error('Error analyzing files:', error);
-        // Fallback to basic file entries
-        const basicEntries: FileEntry[] = Array.from(e.target.files).map((file: File, index) => ({
-          id: `file_${Date.now()}_${index}`,
-          name: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          size: file.size,
-        }));
-        onAddFiles(basicEntries);
-      } finally {
-        setAnalyzing(false);
-        setProgress({ current: 0, total: 0 });
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processFiles(e.dataTransfer.files);
     }
   };
 
   return (
     <div>
+      {/* Drag & Drop Zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-lg p-6 mb-4 transition-all ${
+          isDragging
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-300 bg-gray-50 hover:border-blue-400'
+        } ${analyzing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={() => !analyzing && fileInputRef.current?.click()}
+      >
+        <div className="text-center">
+          <div className="text-4xl mb-2">{isDragging ? '📂' : '📁'}</div>
+          <p className="text-gray-700 font-medium mb-1">
+            {isDragging ? '¡Suelta los archivos aquí!' : 'Arrastra archivos aquí o haz clic para seleccionar'}
+          </p>
+          <p className="text-sm text-gray-500">
+            Soporta imágenes, videos, audio y documentos
+          </p>
+        </div>
+      </div>
+
       <input
         type="file"
         multiple
         onChange={handleFileChange}
         disabled={analyzing}
-        className="block w-full text-sm text-gray-500
-                   file:mr-4 file:py-2 file:px-4
-                   file:rounded-md file:border-0
-                   file:text-sm file:font-semibold
-                   file:bg-blue-50 file:text-blue-700
-                   hover:file:bg-blue-100 mb-4
-                   disabled:opacity-50 disabled:cursor-not-allowed"
+        className="hidden"
         ref={fileInputRef}
       />
 
