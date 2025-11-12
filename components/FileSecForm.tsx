@@ -4,6 +4,8 @@ import { FileEntry } from '../types';
 import Button from './Button';
 import { analyzeFiles } from '../services/fileAnalyzer';
 import { exportToCSV, exportToExcel, exportToJSON } from '../services/exportService';
+import { addFilesToLibrary } from '../services/fileLibrary';
+import FileLibrary from './FileLibrary';
 
 interface FileSecFormProps {
   files: FileEntry[];
@@ -16,6 +18,7 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const processFiles = async (fileList: FileList | File[]) => {
     setAnalyzing(true);
@@ -26,6 +29,10 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
       const analyzedFiles = await analyzeFiles(filesArray, (current, total) => {
         setProgress({ current, total });
       });
+
+      // Save to library automatically
+      const addedCount = addFilesToLibrary(analyzedFiles);
+      console.log(`Added ${addedCount} new files to library`);
 
       onAddFiles(analyzedFiles);
     } catch (error) {
@@ -77,6 +84,17 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
 
   return (
     <div>
+      {/* Library Button */}
+      <div className="mb-4 flex justify-end">
+        <Button
+          variant="secondary"
+          onClick={() => setShowLibrary(true)}
+          className="text-sm"
+        >
+          📚 Abrir Biblioteca de Archivos
+        </Button>
+      </div>
+
       {/* Drag & Drop Zone */}
       <div
         onDragOver={handleDragOver}
@@ -95,7 +113,7 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
             {isDragging ? '¡Suelta los archivos aquí!' : 'Arrastra archivos aquí o haz clic para seleccionar'}
           </p>
           <p className="text-sm text-gray-500">
-            Soporta imágenes, videos, audio y documentos
+            Soporta imágenes, videos, audio y documentos • Los archivos se guardan automáticamente en la biblioteca
           </p>
         </div>
       </div>
@@ -228,6 +246,13 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
           </ul>
         </div>
       )}
+
+      {/* File Library Modal */}
+      <FileLibrary
+        isOpen={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        onAddFiles={onAddFiles}
+      />
     </div>
   );
 };
