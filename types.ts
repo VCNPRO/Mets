@@ -59,9 +59,16 @@ export interface MediaMetadata {
   duration?: number; // in seconds
   bitrate?: number;
   codec?: string;
-  sampleRate?: number; // for audio
-  channels?: number; // for audio
-  frameRate?: number; // for video
+  // Audio specific
+  sampleRate?: number; // Hz (e.g., 44100, 48000)
+  channels?: number; // 1=mono, 2=stereo, 6=5.1
+  audioCodec?: string; // AAC, MP3, WAV, etc.
+  // Video specific
+  frameRate?: number; // FPS
+  videoCodec?: string; // H.264, H.265, VP9, etc.
+  width?: number; // video width in pixels
+  height?: number; // video height in pixels
+  aspectRatio?: string; // e.g., "16:9", "4:3"
 }
 
 export interface FileEntry {

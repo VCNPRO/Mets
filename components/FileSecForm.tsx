@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { FileEntry } from '../types';
 import Button from './Button';
 import { analyzeFiles } from '../services/fileAnalyzer';
+import { exportToCSV, exportToExcel, exportToJSON } from '../services/exportService';
 
 interface FileSecFormProps {
   files: FileEntry[];
@@ -129,9 +130,34 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         <p className="text-gray-500 italic">No se han añadido archivos.</p>
       ) : (
         <div>
-          <p className="text-sm text-gray-600 mb-2">
-            {files.length} archivo{files.length !== 1 ? 's' : ''} cargado{files.length !== 1 ? 's' : ''}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-600">
+              {files.length} archivo{files.length !== 1 ? 's' : ''} cargado{files.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => exportToCSV(files)}
+                className="text-xs py-1 px-3"
+              >
+                📄 CSV
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => exportToExcel(files)}
+                className="text-xs py-1 px-3"
+              >
+                📊 Excel
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => exportToJSON(files)}
+                className="text-xs py-1 px-3"
+              >
+                🔧 JSON
+              </Button>
+            </div>
+          </div>
           <ul className="border border-gray-200 rounded-md divide-y divide-gray-200">
             {files.map((file) => (
               <li key={file.id} className="p-4">
@@ -167,8 +193,29 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
                     )}
                     {file.media && (
                       <div className="mt-2 text-xs text-gray-600">
-                        🎬 {file.media.duration?.toFixed(2)}s
-                        {file.media.bitrate && ` • ${Math.round(file.media.bitrate / 1000)}kbps`}
+                        {/* Video metadata */}
+                        {file.media.width && file.media.height && (
+                          <div>
+                            🎬 {file.media.width}×{file.media.height}px
+                            {file.media.aspectRatio && ` (${file.media.aspectRatio})`}
+                            {file.media.frameRate && ` • ${file.media.frameRate}fps`}
+                            {file.media.videoCodec && ` • ${file.media.videoCodec}`}
+                          </div>
+                        )}
+                        {/* Audio/General metadata */}
+                        <div>
+                          {file.media.duration && `⏱️ ${file.media.duration.toFixed(2)}s`}
+                          {file.media.bitrate && ` • ${Math.round(file.media.bitrate / 1000)}kbps`}
+                          {file.media.audioCodec && ` • ${file.media.audioCodec}`}
+                        </div>
+                        {/* Audio specific */}
+                        {(file.media.sampleRate || file.media.channels) && (
+                          <div>
+                            🎵
+                            {file.media.sampleRate && ` ${file.media.sampleRate}Hz`}
+                            {file.media.channels && ` • ${file.media.channels === 1 ? 'Mono' : file.media.channels === 2 ? 'Estéreo' : `${file.media.channels} canales`}`}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

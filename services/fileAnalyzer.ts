@@ -164,6 +164,75 @@ const extractImageDimensionsFromElement = (file: File): Promise<ImageTechMetadat
 };
 
 /**
+ * Infer codec from MIME type
+ */
+const inferCodec = (mimeType: string): { videoCodec?: string; audioCodec?: string; codec?: string } => {
+  const lower = mimeType.toLowerCase();
+  const result: { videoCodec?: string; audioCodec?: string; codec?: string } = {};
+
+  // Video codecs
+  if (lower.includes('mp4')) {
+    result.videoCodec = 'H.264';
+    result.audioCodec = 'AAC';
+    result.codec = 'H.264/AAC';
+  } else if (lower.includes('webm')) {
+    result.videoCodec = 'VP8/VP9';
+    result.audioCodec = 'Opus/Vorbis';
+    result.codec = 'VP8/Opus';
+  } else if (lower.includes('avi')) {
+    result.videoCodec = 'MPEG-4';
+    result.codec = 'MPEG-4';
+  } else if (lower.includes('mov') || lower.includes('quicktime')) {
+    result.videoCodec = 'H.264';
+    result.codec = 'H.264';
+  } else if (lower.includes('mkv') || lower.includes('matroska')) {
+    result.videoCodec = 'H.264/H.265';
+    result.codec = 'H.264';
+  }
+
+  // Audio codecs
+  if (lower.includes('mp3') || lower.includes('mpeg')) {
+    result.audioCodec = 'MP3';
+    result.codec = 'MP3';
+  } else if (lower.includes('aac')) {
+    result.audioCodec = 'AAC';
+    result.codec = 'AAC';
+  } else if (lower.includes('wav')) {
+    result.audioCodec = 'PCM';
+    result.codec = 'PCM';
+  } else if (lower.includes('ogg') || lower.includes('vorbis')) {
+    result.audioCodec = 'Vorbis';
+    result.codec = 'Vorbis';
+  } else if (lower.includes('opus')) {
+    result.audioCodec = 'Opus';
+    result.codec = 'Opus';
+  } else if (lower.includes('flac')) {
+    result.audioCodec = 'FLAC';
+    result.codec = 'FLAC';
+  }
+
+  return result;
+};
+
+/**
+ * Calculate aspect ratio from width and height
+ */
+const calculateAspectRatio = (width: number, height: number): string => {
+  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+  const divisor = gcd(width, height);
+  const ratioW = width / divisor;
+  const ratioH = height / divisor;
+
+  // Common aspect ratios
+  if (Math.abs(ratioW / ratioH - 16 / 9) < 0.01) return '16:9';
+  if (Math.abs(ratioW / ratioH - 4 / 3) < 0.01) return '4:3';
+  if (Math.abs(ratioW / ratioH - 21 / 9) < 0.01) return '21:9';
+  if (Math.abs(ratioW / ratioH - 1) < 0.01) return '1:1';
+
+  return `${ratioW}:${ratioH}`;
+};
+
+/**
  * Extract metadata from audio/video files
  */
 const extractMediaMetadata = async (file: File): Promise<MediaMetadata | undefined> => {
@@ -179,14 +248,69 @@ const extractMediaMetadata = async (file: File): Promise<MediaMetadata | undefin
     const mediaElement = isVideo ? document.createElement('video') : document.createElement('audio');
     const url = URL.createObjectURL(file);
 
-    mediaElement.onloadedmetadata = () => {
+    mediaElement.onloadedmetadata = async () => {
       const metadata: MediaMetadata = {
         duration: mediaElement.duration,
       };
 
+      // Calculate approximate bitrate (bits per second)
+      if (mediaElement.duration && mediaElement.duration > 0) {
+        metadata.bitrate = Math.round((file.size * 8) / mediaElement.duration);
+      }
+
+      // Infer codecs from MIME type
+      const codecs = inferCodec(file.type);
+      if (codecs.codec) metadata.codec = codecs.codec;
+
       if (isVideo) {
         const videoElement = mediaElement as HTMLVideoElement;
-        metadata.frameRate = 30; // Default, actual frame rate is hard to get in browser
+
+        // Video dimensions
+        if (videoElement.videoWidth && videoElement.videoHeight) {
+          metadata.width = videoElement.videoWidth;
+          metadata.height = videoElement.videoHeight;
+          metadata.aspectRatio = calculateAspectRatio(videoElement.videoWidth, videoElement.videoHeight);
+        }
+
+        // Video codec
+        if (codecs.videoCodec) {
+          metadata.videoCodec = codecs.videoCodec;
+        }
+
+        // Audio codec for video container
+        if (codecs.audioCodec) {
+          metadata.audioCodec = codecs.audioCodec;
+        }
+
+        // Frame rate estimation (approximate)
+        // Browser doesn't expose this directly, so we estimate common rates
+        metadata.frameRate = 30; // Most common, could be 24, 25, 30, 60
+      }
+
+      if (isAudio) {
+        // Audio codec
+        if (codecs.audioCodec) {
+          metadata.audioCodec = codecs.audioCodec;
+        }
+
+        // Try to get audio context info (channels, sample rate)
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const arrayBuffer = await file.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+          metadata.channels = audioBuffer.numberOfChannels;
+          metadata.sampleRate = audioBuffer.sampleRate;
+
+          audioContext.close();
+        } catch (e) {
+          // If Web Audio API fails, set defaults based on common formats
+          console.warn('Could not decode audio with Web Audio API:', e);
+
+          // Common defaults
+          metadata.sampleRate = 44100; // CD quality
+          metadata.channels = 2; // Stereo
+        }
       }
 
       URL.revokeObjectURL(url);
@@ -199,6 +323,11 @@ const extractMediaMetadata = async (file: File): Promise<MediaMetadata | undefin
     };
 
     mediaElement.src = url;
+
+    // For video, we need to load some data
+    if (isVideo) {
+      mediaElement.load();
+    }
   });
 };
 

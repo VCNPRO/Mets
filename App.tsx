@@ -248,50 +248,61 @@ const App: React.FC = () => {
           </div>
         )}
 
-        <SectionCard
-          title="0. Encabezado METS (metsHdr)"
-          description="Información sobre el documento METS mismo (fechas, agente responsable, estado).">
-          <MetsHdrForm data={metsState.metsHdr} onChange={handleMetsHdrChange} />
-        </SectionCard>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Metadata */}
+          <div className="space-y-6">
+            <SectionCard
+              title="0. Encabezado METS (metsHdr)"
+              description="Información sobre el documento METS mismo (fechas, agente responsable, estado).">
+              <MetsHdrForm data={metsState.metsHdr} onChange={handleMetsHdrChange} />
+            </SectionCard>
 
-        <SectionCard
-          title="1. Metadatos Descriptivos (dmdSec)"
-          description="Describe qué es el objeto digital (título, autor, fecha, tema).">
-          <DmdSecForm data={metsState.dmdSec} onChange={handleDmdSecChange} />
-        </SectionCard>
+            <SectionCard
+              title="1. Metadatos Descriptivos (dmdSec)"
+              description="Describe qué es el objeto digital (título, autor, fecha, tema).">
+              <DmdSecForm data={metsState.dmdSec} onChange={handleDmdSecChange} />
+            </SectionCard>
 
-        <SectionCard
-          title="2. Metadatos Administrativos (amdSec)"
-          description="Describe cómo se gestiona el objeto (derechos, resolución de escáner, acciones de preservación).">
-          <AmdSecForm data={metsState.amdSec} onChange={handleAmdSecChange} />
-        </SectionCard>
+            <SectionCard
+              title="2. Metadatos Administrativos (amdSec)"
+              description="Describe cómo se gestiona el objeto (derechos, resolución de escáner, acciones de preservación).">
+              <AmdSecForm data={metsState.amdSec} onChange={handleAmdSecChange} />
+            </SectionCard>
+          </div>
 
-        <SectionCard
-          title="3. Sección de Ficheros (fileSec)"
-          description="Inventario de todos los archivos físicos que componen el objeto digital.">
-          <FileSecForm
-            files={metsState.fileSec}
-            onAddFiles={handleAddFiles}
-            onRemoveFile={handleRemoveFile}
-          />
-        </SectionCard>
+          {/* Right Column - Files & Structure */}
+          <div className="space-y-6">
+            <SectionCard
+              title="3. Sección de Ficheros (fileSec)"
+              description="Inventario de todos los archivos físicos que componen el objeto digital.">
+              <FileSecForm
+                files={metsState.fileSec}
+                onAddFiles={handleAddFiles}
+                onRemoveFile={handleRemoveFile}
+              />
+            </SectionCard>
 
-        <SectionCard
-          title="4. Mapa Estructural (structMap)"
-          description="Define la jerarquía y el orden de los archivos del objeto digital.">
-          <StructMapForm
-            structMap={metsState.structMap}
-            files={metsState.fileSec}
-            onChange={handleStructMapChange}
-          />
-        </SectionCard>
+            <SectionCard
+              title="4. Mapa Estructural (structMap)"
+              description="Define la jerarquía y el orden de los archivos del objeto digital.">
+              <StructMapForm
+                structMap={metsState.structMap}
+                files={metsState.fileSec}
+                onChange={handleStructMapChange}
+              />
+            </SectionCard>
+          </div>
+        </div>
 
+        {/* Generate Button */}
         <div className="my-8 text-center">
           <Button onClick={handleGenerateXml} disabled={isLoading}>
             {isLoading ? 'Generando...' : 'Generar XML METS'}
           </Button>
         </div>
 
+        {/* Result Section - Full Width */}
         <SectionCard
           title="Resultado"
           description="Visualiza y descarga el archivo XML METS generado."
