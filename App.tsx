@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [projectName, setProjectName] = useState<string>('Proyecto METS');
+  const [currentTemplateId, setCurrentTemplateId] = useState<string>('');
 
   // Load project from localStorage on mount
   useEffect(() => {
@@ -41,6 +42,7 @@ const App: React.FC = () => {
         if (parsed.metsState) {
           setMetsState(parsed.metsState);
           setProjectName(parsed.projectName || 'Proyecto METS');
+          setCurrentTemplateId(parsed.templateId || '');
         }
       } catch (e) {
         console.error('Error loading saved project:', e);
@@ -54,12 +56,13 @@ const App: React.FC = () => {
       localStorage.setItem('metsProject', JSON.stringify({
         metsState,
         projectName,
+        templateId: currentTemplateId,
         savedAt: new Date().toISOString(),
       }));
     }, 1000); // Debounce 1 second
 
     return () => clearTimeout(saveTimeout);
-  }, [metsState, projectName]);
+  }, [metsState, projectName, currentTemplateId]);
 
   const handleSelectTemplate = useCallback((templateId: string) => {
     const templateData = applyTemplate(templateId);
@@ -67,6 +70,7 @@ const App: React.FC = () => {
       ...prevState,
       ...templateData,
     }));
+    setCurrentTemplateId(templateId);
     setShowTemplateSelector(false);
   }, []);
 
@@ -74,6 +78,7 @@ const App: React.FC = () => {
     const projectData = {
       metsState,
       projectName,
+      templateId: currentTemplateId,
       savedAt: new Date().toISOString(),
     };
     const dataStr = JSON.stringify(projectData, null, 2);
@@ -86,7 +91,7 @@ const App: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [metsState, projectName]);
+  }, [metsState, projectName, currentTemplateId]);
 
   const handleLoadProject = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,6 +104,7 @@ const App: React.FC = () => {
         if (parsed.metsState) {
           setMetsState(parsed.metsState);
           setProjectName(parsed.projectName || 'Proyecto METS');
+          setCurrentTemplateId(parsed.templateId || '');
         }
       } catch (error) {
         setError('Error al cargar el proyecto. Archivo inválido.');
@@ -195,9 +201,11 @@ const App: React.FC = () => {
     }
   }, [generatedXml]);
 
+  const isEuskadiTemplate = currentTemplateId.startsWith('euskadi');
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      <Header isEuskadi={isEuskadiTemplate} />
 
       {showTemplateSelector && (
         <TemplateSelector
@@ -216,6 +224,12 @@ const App: React.FC = () => {
               onChange={(e) => setProjectName(e.target.value)}
               className="text-xl font-bold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2"
             />
+            {isEuskadiTemplate && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-green-600 to-red-600 text-white shadow-md">
+                <span className="text-lg">🏴</span>
+                Biblioteca Digital Euskadi
+              </span>
+            )}
             <span className="text-sm text-gray-500">
               {metsState.fileSec.length} archivos • Auto-guardado
             </span>
