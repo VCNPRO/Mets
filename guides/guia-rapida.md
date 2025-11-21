@@ -8,12 +8,19 @@
 
 ### 1️⃣ Selecciona una Plantilla
 Click en **🎨 Nueva Plantilla** y elige:
+
+**Templates Base:**
 - 📚 **Libro Digital** - Para libros escaneados
 - 📰 **Revista** - Para publicaciones periódicas
 - 📷 **Fotografía** - Para colecciones de imágenes
 - 🎬 **Video** - Para archivos audiovisuales
 - 🎵 **Audio** - Para grabaciones
 - 📄 **Documento** - Para archivos históricos
+
+**🆕 Templates Regionales:** (con perfiles METS oficiales)
+- 🏴 **Euskadi** (7 plantillas) - Biblioteca Digital de Euskadi
+- 🏴 **Galicia** (3 plantillas) - Biblioteca Dixital de Galicia
+- 🇪🇸 **Hispana / BVPB** (3 plantillas) - Agregador nacional español
 
 ### 2️⃣ Completa los Datos Básicos
 Rellena los campos obligatorios (marcados con *):
@@ -48,6 +55,67 @@ En el **Mapa Estructural**:
 - Click en **"Generar XML METS"**
 - Revisa la **validación automática** (✅/⚠️)
 - **Descarga** el archivo XML
+
+---
+
+## 🏴 Templates Regionales (NUEVO)
+
+### ¿Qué son?
+Perfiles METS oficiales para bibliotecas digitales regionales de España, con estándares específicos de metadatos y requisitos técnicos.
+
+### Regiones disponibles
+
+#### 🏴 Euskadi - Biblioteca Digital de Euskadi
+**7 plantillas** con perfiles ELD_001 a ELD_004:
+- ✅ **Metadatos:** Dublin Core
+- ✅ **Preservación:** PREMIS events + MIX + EBUCORE
+- ✅ **Identificación:** Header verde-rojo + badge "Euskadi"
+- 📚 No seriados (preservación y difusión)
+- 📰 Seriados (preservación y difusión)
+- 🎵 Audio, 🎬 Video, 📜 Manuscritos
+
+**Cuándo usar:** Publicas en liburutegidigitala.euskadi.eus
+
+#### 🏴 Galicia - Biblioteca Dixital de Galicia
+**3 plantillas** con perfil LOC Historical Newspapers:
+- ✅ **Metadatos:** MARC21 (NO Dublin Core)
+- ✅ **Preservación:** PREMIS + jhove validation
+- ✅ **Derechos:** metsRights completo
+- ✅ **Identificación:** Header azul-celeste + badge "Galicia"
+- ✅ **5 fileGrp obligatorios:** ARCHIVE_TIF, REFERENCE_JPEG, OCRDIRTY_PDF, THUMBNAIL, OCR_ALTO
+- 📰 Prensa histórica, 📚 Monografías, 📜 Manuscritos
+
+**Cuándo usar:** Publicas en biblioteca.galiciana.gal
+
+#### 🇪🇸 Hispana / BVPB - Agregador Nacional
+**3 plantillas** con perfil LOC:
+- ✅ **Metadatos:** MODS 3.7 (NO Dublin Core)
+- ✅ **Preservación:** PREMIS events + MIX
+- ✅ **Identificación:** Header rojo-amarillo + badge "Hispana / BVPB"
+- 📰 Prensa histórica (BVPB), 📚 Libros antiguos, 🗺️ Cartografía
+
+**Cuándo usar:** Publicas en Hispana, BVPB o BNE
+
+### Particularidades técnicas clave
+
+**Euskadi:**
+- Perfiles ELD propios (ELD_001, ELD_002, ELD_003, ELD_004)
+- MIX para imágenes, EBUCORE para audio/video
+- 4-6 fileGrp según tipo de material
+
+**Galicia:**
+- Exactamente 5 fileGrp (obligatorios)
+- jhove validation como evento PREMIS
+- metsRights completo (category, holder, context, status)
+- 400dpi para prensa, 600dpi para manuscritos
+
+**Hispana:**
+- MODS completo con autoridades
+- structMap con tipos LOC (news:issue, news:page, news:article)
+- ALTO XML v2.0+ obligatorio
+- 400-600dpi según material
+
+**Ver Guía Completa** para detalles técnicos completos de cada plantilla regional.
 
 ---
 
