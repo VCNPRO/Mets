@@ -389,6 +389,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'ELD_001', // Euskadi preservation profile for non-serial resources
         agentType: 'ORGANIZATION',
         agentRole: 'PRESERVATION',
         agentName: 'EUSKADIKO LIBURUTEGI DIGITALA',
@@ -409,6 +410,29 @@ export const templates: Template[] = [
         scannerResolution: '600dpi',
         preservationActions: 'Digitalización TIFF, JPEG derivados, PDF, ALTO OCR, validación PREMIS',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+          {
+            id: 'evt_validation',
+            type: 'validation',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'MD5 checksum validation',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+        ],
+        mix: {
+          colorSpace: 'RGB',
+          compression: 'Uncompressed',
+          scannerManufacturer: '',
+          scannerModel: '',
+        },
       },
       structMap: [
         { id: 'div_tiff', label: 'ARCHIVE_TIFF', fileIds: [], type: 'archive', order: 1 },
@@ -428,6 +452,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'ELD_002', // Euskadi preservation profile for serial resources (newspapers)
         agentType: 'ORGANIZATION',
         agentRole: 'PRESERVATION',
         agentName: 'EUSKADIKO LIBURUTEGI DIGITALA',
@@ -442,12 +467,34 @@ export const templates: Template[] = [
         format: 'image/tiff',
         language: 'eu',
         description: 'Preservación seriados - PROFILE: ELD_002',
+        genre: 'newspaper',
       },
       amdSec: {
         rightsHolder: 'Euskal Autonomia Erkidegoko Administrazioa',
         scannerResolution: '400dpi',
         preservationActions: 'Digitalización TIFF de prensa, derivados JPEG/PDF, ALTO OCR, PREMIS',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+          {
+            id: 'evt_ocr',
+            type: 'creation',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'ALTO OCR generation',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+        ],
+        mix: {
+          colorSpace: 'Grayscale',
+          compression: 'Uncompressed',
+        },
       },
       structMap: [
         { id: 'div_tiff', label: 'ARCHIVE_TIFF', fileIds: [], type: 'archive', order: 1 },
@@ -467,6 +514,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'ELD_003', // Euskadi preservation profile for audio resources
         agentType: 'ORGANIZATION',
         agentRole: 'PRESERVATION',
         agentName: 'EUSKADIKO LIBURUTEGI DIGITALA',
@@ -481,12 +529,37 @@ export const templates: Template[] = [
         format: 'audio/x-wav',
         language: 'eu',
         description: 'Preservación audio - PROFILE: ELD_003',
+        marcRecordUri: '', // URI to external MARCXML record
       },
       amdSec: {
         rightsHolder: 'Euskal Autonomia Erkidegoko Administrazioa',
         scannerResolution: '',
         preservationActions: 'Digitalización WAV, derivados MP3, imágenes TIFF/JPEG, PDF, metadatos EBUCORE',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+          {
+            id: 'evt_migration',
+            type: 'migration',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'WAV to MP3 conversion',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+        ],
+        ebucore: {
+          audioCodec: 'PCM',
+          audioSampleRate: 48000, // 48 kHz
+          audioChannels: 2, // Stereo
+          audioBitrate: 1536, // kbps
+          duration: '', // ISO duration
+        },
       },
       structMap: [
         { id: 'div_wav', label: 'ARCHIVE_WAV', fileIds: [], type: 'archive', order: 1 },
@@ -507,6 +580,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'ELD_004', // Euskadi preservation profile for audiovisual resources
         agentType: 'ORGANIZATION',
         agentRole: 'PRESERVATION',
         agentName: 'EUSKADIKO LIBURUTEGI DIGITALA',
@@ -521,12 +595,42 @@ export const templates: Template[] = [
         format: 'video/quicktime',
         language: 'eu',
         description: 'Preservación audiovisual - PROFILE: ELD_004',
+        marcRecordUri: '', // URI to external MARCXML record
       },
       amdSec: {
         rightsHolder: 'Euskal Autonomia Erkidegoko Administrazioa',
         scannerResolution: '',
         preservationActions: 'Digitalización MXF, derivados MP4, imágenes TIFF/JPEG, PDF, metadatos EBUCORE',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+          {
+            id: 'evt_migration',
+            type: 'migration',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'MXF to MP4 conversion',
+            agent: 'EUSKADIKO LIBURUTEGI DIGITALA',
+          },
+        ],
+        ebucore: {
+          videoCodec: 'JPEG 2000',
+          audioCodec: 'PCM',
+          videoFrameRate: 25, // fps
+          videoBitrate: 50000, // kbps
+          videoWidth: 1920,
+          videoHeight: 1080,
+          videoAspectRatio: '16:9',
+          audioSampleRate: 48000, // Hz
+          audioChannels: 2,
+          duration: '', // ISO duration
+        },
       },
       structMap: [
         { id: 'div_mxf', label: 'ARCHIVE_MXF', fileIds: [], type: 'archive', order: 1 },
@@ -548,6 +652,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/mets/profiles/00000010.xml', // LOC Historical Newspapers profile
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca Nacional de España',
@@ -562,12 +667,34 @@ export const templates: Template[] = [
         format: 'image/tiff',
         language: 'es',
         description: 'Número de periódico histórico - Perfil LOC/Hispana',
+        genre: 'newspaper', // MODS genre for newspaper
       },
       amdSec: {
         rightsHolder: 'Biblioteca Nacional de España',
         scannerResolution: '400dpi',
         preservationActions: 'Digitalización TIFF, OCR ALTO, derivados JPEG, validación PREMIS',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca Nacional de España',
+          },
+          {
+            id: 'evt_ocr',
+            type: 'creation',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'ALTO OCR generation',
+            agent: 'Biblioteca Nacional de España',
+          },
+        ],
+        mix: {
+          colorSpace: 'Grayscale',
+          compression: 'Uncompressed',
+        },
       },
       structMap: [
         { id: 'div_page1', label: 'Página 1', fileIds: [], type: 'page', order: 1 },
@@ -585,6 +712,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/mets/profiles/00000010.xml',
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca Digital Hispánica',
@@ -599,12 +727,26 @@ export const templates: Template[] = [
         format: 'image/tiff',
         language: 'es',
         description: 'Monografía digitalizada - Perfil Hispana/BVPB',
+        genre: 'book',
       },
       amdSec: {
         rightsHolder: 'Biblioteca Nacional de España',
         scannerResolution: '600dpi',
         preservationActions: 'Digitalización TIFF, OCR ALTO, PDF, derivados JPEG',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca Digital Hispánica',
+          },
+        ],
+        mix: {
+          colorSpace: 'RGB',
+          compression: 'Uncompressed',
+        },
       },
       structMap: [
         { id: 'div_cover', label: 'Portada', fileIds: [], type: 'cover', order: 1 },
@@ -622,6 +764,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/mets/profiles/00000010.xml',
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca Digital Hispánica',
@@ -636,12 +779,27 @@ export const templates: Template[] = [
         format: 'image/tiff',
         language: 'es',
         description: 'Manuscrito digitalizado - Perfil Hispana',
+        genre: 'manuscript',
       },
       amdSec: {
         rightsHolder: 'Biblioteca Nacional de España',
         scannerResolution: '600dpi',
         preservationActions: 'Digitalización TIFF alta resolución, MIX, derivados JPEG',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca Digital Hispánica',
+          },
+        ],
+        mix: {
+          colorSpace: 'RGB',
+          compression: 'Uncompressed',
+          bitsPerSample: [8, 8, 8],
+        },
       },
       structMap: [
         { id: 'div_folio1', label: 'Folio 1', fileIds: [], type: 'folio', order: 1 },
@@ -659,6 +817,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/standards/mets/test/ndnp/00000010.xml', // LOC newspaper profile used by Galiciana
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca de Galicia',
@@ -668,18 +827,47 @@ export const templates: Template[] = [
         author: '',
         date: '',
         subject: '',
-        metadataStandard: 'DublinCore',
+        metadataStandard: 'MARC21', // Galicia uses MARC21 from Biblioteca Dixital de Galicia
         type: 'newspaper',
         format: 'image/tiff',
         language: 'gl',
         description: 'Periódico histórico - Memoria Dixital de Galicia con MARC21',
         publisher: 'Biblioteca de Galicia',
+        marcRecordUri: '', // URI to MARC21 record in Biblioteca Dixital de Galicia
       },
       amdSec: {
         rightsHolder: 'Xunta de Galicia',
         scannerResolution: '400dpi',
         preservationActions: 'Digitalización TIF (archive), JPEG (reference), PDF (ocrdirty), thumbnails, OCR ALTO, validación jhove, PREMIS',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca de Galicia',
+          },
+          {
+            id: 'evt_validation',
+            type: 'validation',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            outcomeDetail: 'jhove validation',
+            agent: 'Biblioteca de Galicia',
+          },
+        ],
+        mix: {
+          colorSpace: 'Grayscale',
+          compression: 'Uncompressed',
+        },
+        metsRights: {
+          category: 'COPYRIGHTED',
+          holder: 'Xunta de Galicia',
+          context: 'GENERAL PUBLIC',
+          status: 'allowed',
+        },
+        jhoveValidation: true, // Galicia uses jhove for validation
       },
       structMap: [
         { id: 'div_archive', label: 'ARCHIVE_TIF', fileIds: [], type: 'archive', order: 1 },
@@ -700,6 +888,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/standards/mets/test/ndnp/00000010.xml',
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca de Galicia',
@@ -709,18 +898,39 @@ export const templates: Template[] = [
         author: '',
         date: '',
         subject: '',
-        metadataStandard: 'DublinCore',
+        metadataStandard: 'MARC21',
         type: 'monograph',
         format: 'image/tiff',
         language: 'gl',
         description: 'Monografía - Biblioteca Dixital de Galicia con MARC21',
         publisher: 'Biblioteca de Galicia',
+        marcRecordUri: '',
       },
       amdSec: {
         rightsHolder: 'Xunta de Galicia',
         scannerResolution: '600dpi',
         preservationActions: 'Digitalización TIF, JPEG, PDF, thumbnails, OCR ALTO, jhove, PREMIS',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca de Galicia',
+          },
+        ],
+        mix: {
+          colorSpace: 'RGB',
+          compression: 'Uncompressed',
+        },
+        metsRights: {
+          category: 'COPYRIGHTED',
+          holder: 'Xunta de Galicia',
+          context: 'GENERAL PUBLIC',
+          status: 'allowed',
+        },
+        jhoveValidation: true,
       },
       structMap: [
         { id: 'div_archive', label: 'ARCHIVE_TIF', fileIds: [], type: 'archive', order: 1 },
@@ -741,6 +951,7 @@ export const templates: Template[] = [
       metsHdr: {
         createDate: new Date().toISOString(),
         recordStatus: 'NEW',
+        profile: 'http://www.loc.gov/standards/mets/test/ndnp/00000010.xml',
         agentType: 'ORGANIZATION',
         agentRole: 'CREATOR',
         agentName: 'Biblioteca de Galicia',
@@ -750,18 +961,41 @@ export const templates: Template[] = [
         author: '',
         date: '',
         subject: '',
-        metadataStandard: 'DublinCore',
+        metadataStandard: 'MARC21',
         type: 'manuscript',
         format: 'image/tiff',
         language: 'gl',
         description: 'Manuscrito - Memoria Dixital de Galicia',
         publisher: 'Biblioteca de Galicia',
+        marcRecordUri: '',
       },
       amdSec: {
         rightsHolder: 'Xunta de Galicia',
         scannerResolution: '600dpi',
         preservationActions: 'Digitalización alta resolución TIF, JPEG, PDF, thumbnails, metsRights',
         preservationStandard: 'PREMIS',
+        premisEvents: [
+          {
+            id: 'evt_digitization',
+            type: 'digitization',
+            dateTime: new Date().toISOString(),
+            outcome: 'success',
+            agent: 'Biblioteca de Galicia',
+          },
+        ],
+        mix: {
+          colorSpace: 'RGB',
+          compression: 'Uncompressed',
+          bitsPerSample: [8, 8, 8],
+        },
+        metsRights: {
+          category: 'COPYRIGHTED',
+          holder: 'Xunta de Galicia',
+          context: 'ACADEMIC USER',
+          status: 'conditional',
+          licenseType: 'Restricted access',
+        },
+        jhoveValidation: true,
       },
       structMap: [
         { id: 'div_archive', label: 'ARCHIVE_TIF', fileIds: [], type: 'archive', order: 1 },
