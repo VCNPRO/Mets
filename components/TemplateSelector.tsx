@@ -25,6 +25,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelectTemplate, o
     audio: 'Audio',
     document: 'Documentos',
     euskadi: 'Biblioteca Digital Euskadi',
+    hispana: 'Hispana / BVPB',
+    galicia: 'Galicia - Biblioteca Dixital',
   };
 
   // Group templates by category

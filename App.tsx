@@ -202,10 +202,12 @@ const App: React.FC = () => {
   }, [generatedXml]);
 
   const isEuskadiTemplate = currentTemplateId.startsWith('euskadi');
+  const isHispanaTemplate = currentTemplateId.startsWith('hispana');
+  const isGaliciaTemplate = currentTemplateId.startsWith('galicia');
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header isEuskadi={isEuskadiTemplate} />
+      <Header isEuskadi={isEuskadiTemplate} isHispana={isHispanaTemplate} isGalicia={isGaliciaTemplate} />
 
       {showTemplateSelector && (
         <TemplateSelector
@@ -228,6 +230,18 @@ const App: React.FC = () => {
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-green-600 to-red-600 text-white shadow-md">
                 <span className="text-lg">🏴</span>
                 Biblioteca Digital Euskadi
+              </span>
+            )}
+            {isHispanaTemplate && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-red-600 to-yellow-500 text-white shadow-md">
+                <span className="text-lg">🇪🇸</span>
+                Hispana / BVPB
+              </span>
+            )}
+            {isGaliciaTemplate && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-400 to-sky-300 text-gray-800 shadow-md">
+                <span className="text-lg">🏴</span>
+                Biblioteca Dixital de Galicia
               </span>
             )}
             <span className="text-sm text-gray-500">
