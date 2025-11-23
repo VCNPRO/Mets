@@ -1,20 +1,20 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { MetsState, DmdSecData, AmdSecData, FileEntry, StructMapItem, MetsHdrData } from './types';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import SectionCard from './components/SectionCard';
-import MetsHdrForm from './components/MetsHdrForm';
-import DmdSecForm from './components/DmdSecForm';
-import AmdSecForm from './components/AmdSecForm';
-import FileSecForm from './components/FileSecForm';
-import StructMapForm from './components/StructMapForm';
-import MetsOutput from './components/MetsOutput';
-import Button from './components/Button';
-import TemplateSelector from './components/TemplateSelector';
-import ChatbotWidget from './components/ChatbotWidget';
-import { generateMetsXml } from './services/metsService';
-import { applyTemplate } from './services/templates';
+import { MetsState, DmdSecData, AmdSecData, FileEntry, StructMapItem, MetsHdrData } from '../../types';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import SectionCard from '../../components/SectionCard';
+import MetsHdrForm from '../../components/MetsHdrForm';
+import DmdSecForm from '../../components/DmdSecForm';
+import AmdSecForm from '../../components/AmdSecForm';
+import FileSecForm from '../../components/FileSecForm';
+import StructMapForm from '../../components/StructMapForm';
+import MetsOutput from '../../components/MetsOutput';
+import Button from '../../components/Button';
+import TemplateSelector from '../../components/TemplateSelector';
+import ChatbotWidget from '../../components/ChatbotWidget';
+import { generateMetsXml } from '../../services/metsService';
+import { applyTemplate } from '../../services/templates';
 
 const App: React.FC = () => {
   const [showTemplateSelector, setShowTemplateSelector] = useState<boolean>(false);
