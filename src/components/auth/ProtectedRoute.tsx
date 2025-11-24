@@ -8,6 +8,9 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
+  // TEMPORALMENTE DESHABILITADO - Acceso sin autenticación
+  // TODO: Volver a habilitar cuando se necesite
+  /*
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -28,6 +31,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   if (requireAdmin && user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
+  */
 
+  // Acceso directo sin verificación
   return <>{children}</>;
 }

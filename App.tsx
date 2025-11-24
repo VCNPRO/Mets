@@ -13,27 +13,19 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Ruta principal - App METS */}
+          {/* Ruta principal - App METS - ACCESO DIRECTO TEMPORAL */}
           <Route
             path="/"
-            element={
-              <ProtectedRoute>
-                <MetsApp />
-              </ProtectedRoute>
-            }
+            element={<MetsApp />}
           />
 
-          {/* Ruta de login */}
+          {/* Ruta de login - Mantenida pero no requerida */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Ruta de administración - Solo admins */}
+          {/* Ruta de administración - ACCESO DIRECTO TEMPORAL */}
           <Route
             path="/admin"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <AdminPage />
-              </ProtectedRoute>
-            }
+            element={<AdminPage />}
           />
 
           {/* Redirigir cualquier otra ruta a / */}
