@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import GuideViewer from './GuideViewer';
-import AIConfig from './AIConfig';
 
 interface HeaderProps {
   isEuskadi?: boolean;
@@ -11,7 +10,6 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, isGalicia = false }) => {
   const [showGuides, setShowGuides] = useState(false);
-  const [showAIConfig, setShowAIConfig] = useState(false);
 
   const headerGradient = isEuskadi
     ? 'bg-gradient-to-r from-green-700 via-green-600 to-red-600'
@@ -40,14 +38,6 @@ const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, i
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowAIConfig(true)}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105 flex items-center gap-2"
-              aria-label="Configurar IA"
-            >
-              <span className="text-xl">🤖</span>
-              <span className="hidden md:inline">IA</span>
-            </button>
-            <button
               onClick={() => setShowGuides(true)}
               className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105 flex items-center gap-2"
               aria-label="Ver guías de usuario"
@@ -59,7 +49,6 @@ const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, i
         </div>
       </header>
       <GuideViewer isOpen={showGuides} onClose={() => setShowGuides(false)} />
-      <AIConfig isOpen={showAIConfig} onClose={() => setShowAIConfig(false)} />
     </>
   );
 };

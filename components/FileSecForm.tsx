@@ -7,7 +7,6 @@ import { exportToCSV, exportToExcel, exportToJSON } from '../services/exportServ
 import { addFilesToLibrary } from '../services/fileLibrary';
 import FileLibrary from './FileLibrary';
 import AIAnalysisOptions from './AIAnalysisOptions';
-import AIConfig from './AIConfig';
 import { analyzeFileWithAI, AIAnalysisOptions as AIOptions, downloadGeneratedFile } from '../services/aiAnalysis';
 
 interface FileSecFormProps {
@@ -25,7 +24,6 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
 
   // AI Analysis states
   const [showAIOptions, setShowAIOptions] = useState(false);
-  const [showAIConfig, setShowAIConfig] = useState(false);
   const [selectedFileForAI, setSelectedFileForAI] = useState<{ file: File; fileEntry: FileEntry } | null>(null);
   const [aiAnalyzing, setAIAnalyzing] = useState(false);
   const [aiProgress, setAIProgress] = useState<{ stage: string; message: string } | null>(null);
@@ -407,11 +405,6 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         />
       )}
 
-      {/* AI Config Modal */}
-      <AIConfig
-        isOpen={showAIConfig}
-        onClose={() => setShowAIConfig(false)}
-      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import Button from './Button';
-import { AIAnalysisOptions, hasAPIKeys } from '../services/aiAnalysis';
+import { AIAnalysisOptions } from '../services/aiAnalysis';
 
 interface AIAnalysisOptionsProps {
   isOpen: boolean;
@@ -9,7 +9,6 @@ interface AIAnalysisOptionsProps {
   fileType: string;
   onClose: () => void;
   onAnalyze: (options: AIAnalysisOptions) => void;
-  onConfigureAPI: () => void;
 }
 
 const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
@@ -18,7 +17,6 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
   fileType,
   onClose,
   onAnalyze,
-  onConfigureAPI,
 }) => {
   const [options, setOptions] = useState<AIAnalysisOptions>({
     transcription: true,
@@ -27,7 +25,6 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
     generateSubtitles: true,
   });
 
-  const configured = hasAPIKeys();
   const isAudioVideo = fileType.startsWith('audio/') || fileType.startsWith('video/');
 
   const handleToggle = (key: keyof AIAnalysisOptions) => {
@@ -52,29 +49,6 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
 
         {/* Content */}
         <div className="p-6">
-          {/* API Keys Warning */}
-          {(!configured.whisper || !configured.gemini) && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md mb-4">
-              <div className="flex items-start">
-                <span className="text-lg mr-2">⚠️</span>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">API Keys no configuradas</p>
-                  <p className="text-xs mt-1">
-                    {!configured.whisper && '• OpenAI/Whisper no configurado'}
-                    {!configured.whisper && <br />}
-                    {!configured.gemini && '• Google Gemini no configurado'}
-                  </p>
-                  <button
-                    onClick={onConfigureAPI}
-                    className="text-xs text-yellow-900 underline mt-2 hover:text-yellow-700"
-                  >
-                    Configurar ahora →
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Options */}
           {isAudioVideo ? (
             <div className="space-y-4">
@@ -85,17 +59,11 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
                     type="checkbox"
                     checked={options.transcription}
                     onChange={() => handleToggle('transcription')}
-                    disabled={!configured.whisper}
-                    className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+                    className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
                   <div className="ml-3 flex-1">
                     <div className="flex items-center">
                       <span className="font-semibold text-gray-900">🎙️ Transcripción Automática</span>
-                      {!configured.whisper && (
-                        <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                          Requiere OpenAI
-                        </span>
-                      )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
                       Transcribe el audio completo con timestamps precisos usando Whisper
@@ -111,7 +79,7 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
                     type="checkbox"
                     checked={options.generateSubtitles}
                     onChange={() => handleToggle('generateSubtitles')}
-                    disabled={!options.transcription || !configured.whisper}
+                    disabled={!options.transcription}
                     className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
                   />
                   <div className="ml-3 flex-1">
@@ -137,17 +105,12 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
                     type="checkbox"
                     checked={options.contentAnalysis}
                     onChange={() => handleToggle('contentAnalysis')}
-                    disabled={!options.transcription || !configured.gemini}
+                    disabled={!options.transcription}
                     className="mt-1 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
                   />
                   <div className="ml-3 flex-1">
                     <div className="flex items-center">
                       <span className="font-semibold text-gray-900">🧠 Análisis de Contenido</span>
-                      {!configured.gemini && (
-                        <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                          Requiere Gemini
-                        </span>
-                      )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
                       Resumen, keywords, temas, sentimiento y entidades detectadas
@@ -208,9 +171,7 @@ const AIAnalysisOptionsComponent: React.FC<AIAnalysisOptionsProps> = ({
             onClick={handleAnalyze}
             disabled={
               !isAudioVideo ||
-              (!options.transcription && !options.contentAnalysis && !options.sceneDetection) ||
-              (options.transcription && !configured.whisper) ||
-              (options.contentAnalysis && !configured.gemini)
+              (!options.transcription && !options.contentAnalysis && !options.sceneDetection)
             }
           >
             🚀 Analizar con IA
