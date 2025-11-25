@@ -6,9 +6,17 @@ interface HeaderProps {
   isEuskadi?: boolean;
   isHispana?: boolean;
   isGalicia?: boolean;
+  onSelectTemplate: (templateId: string) => void;
+  onNewProject: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, isGalicia = false }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  isEuskadi = false, 
+  isHispana = false, 
+  isGalicia = false,
+  onSelectTemplate,
+  onNewProject 
+}) => {
   const [showGuides, setShowGuides] = useState(false);
 
   const headerGradient = isEuskadi
@@ -20,6 +28,12 @@ const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, i
     : 'bg-gradient-to-r from-blue-600 to-indigo-700';
 
   const regionLabel = isEuskadi ? '🏴 Euskadi' : isHispana ? '🇪🇸 Hispana' : isGalicia ? '🏴 Galicia' : null;
+
+  const handleTemplateSelection = (templateId: string) => {
+    if (confirm('¿Estás seguro? Esto reemplazará tu proyecto actual con la nueva plantilla.')) {
+      onSelectTemplate(templateId);
+    }
+  }
 
   return (
     <>
@@ -36,7 +50,38 @@ const Header: React.FC<HeaderProps> = ({ isEuskadi = false, isHispana = false, i
               </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="bg-white bg-opacity-20 rounded-lg p-1 flex gap-1">
+              <button
+                onClick={onNewProject}
+                className="bg-white bg-opacity-10 hover:bg-opacity-30 px-3 py-1 rounded-md text-sm font-semibold transition-all hover:scale-105"
+                title="Abrir selector de plantillas"
+              >
+                🎨 Plantillas
+              </button>
+              <button
+                onClick={() => handleTemplateSelection('euskadi-preservation-nonserial')}
+                className="hover:bg-opacity-30 px-3 py-1 rounded-md text-sm font-semibold transition-all hover:scale-105"
+                title="Cargar plantilla de Biblioteca Digital de Euskadi"
+              >
+                🏴 Euskadi
+              </button>
+              <button
+                onClick={() => handleTemplateSelection('hispana-monograph')}
+                className="hover:bg-opacity-30 px-3 py-1 rounded-md text-sm font-semibold transition-all hover:scale-105"
+                title="Cargar plantilla de Hispana / BVPB"
+              >
+                🇪🇸 Hispana
+              </button>
+              <button
+                onClick={() => handleTemplateSelection('galicia-monograph')}
+                className="hover:bg-opacity-30 px-3 py-1 rounded-md text-sm font-semibold transition-all hover:scale-105"
+                title="Cargar plantilla de Biblioteca Dixital de Galicia"
+              >
+                🏴 Galicia
+              </button>
+            </div>
+
             <button
               onClick={() => setShowGuides(true)}
               className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105 flex items-center gap-2"

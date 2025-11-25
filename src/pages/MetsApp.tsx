@@ -207,7 +207,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header isEuskadi={isEuskadiTemplate} isHispana={isHispanaTemplate} isGalicia={isGaliciaTemplate} />
+      <Header 
+        isEuskadi={isEuskadiTemplate} 
+        isHispana={isHispanaTemplate} 
+        isGalicia={isGaliciaTemplate}
+        onSelectTemplate={handleSelectTemplate} 
+        onNewProject={handleNewProject}
+      />
 
       {showTemplateSelector && (
         <TemplateSelector
