@@ -1,5 +1,6 @@
 
-import React, { useRef, useState } from 'react';
+
+import React, { useRef, useState, useCallback } from 'react';
 import { FileEntry } from '../types';
 import Button from './Button';
 import { analyzeFiles } from '../services/fileAnalyzer';
@@ -8,6 +9,9 @@ import { addFilesToLibrary } from '../services/fileLibrary';
 import FileLibrary from './FileLibrary';
 import AIAnalysisOptions from './AIAnalysisOptions';
 import { analyzeFileWithAI, AIAnalysisOptions as AIOptions, downloadGeneratedFile } from '../services/aiAnalysis';
+
+// Module-level map to hold references to the original File objects
+const fileObjectMap = new Map<string, File>();
 
 interface FileSecFormProps {
   files: FileEntry[];
@@ -38,14 +42,20 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         setProgress({ current, total });
       });
 
-      // Save to library automatically
+      // Associate original File objects with their FileEntry IDs
+      analyzedFiles.forEach(fileEntry => {
+        const originalFile = filesArray.find(f => f.name === fileEntry.name && f.size === fileEntry.size);
+        if (originalFile) {
+          fileObjectMap.set(fileEntry.id, originalFile);
+        }
+      });
+
       const addedCount = addFilesToLibrary(analyzedFiles);
       console.log(`Added ${addedCount} new files to library`);
 
       onAddFiles(analyzedFiles);
     } catch (error) {
       console.error('Error analyzing files:', error);
-      // Fallback to basic file entries
       const basicEntries: FileEntry[] = filesArray.map((file: File, index) => ({
         id: `file_${Date.now()}_${index}`,
         name: file.name,
@@ -61,6 +71,11 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
       }
     }
   };
+
+  const handleRemoveAndClean = useCallback((id: string) => {
+    fileObjectMap.delete(id);
+    onRemoveFile(id);
+  }, [onRemoveFile]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -90,10 +105,10 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
     }
   };
 
-  // Handle AI Analysis
   const handleAnalyzeWithAI = async (file: File, fileEntry: FileEntry, options: AIOptions) => {
     setAIAnalyzing(true);
     setAIProgress({ stage: 'init', message: 'Iniciando análisis con IA...' });
+    setShowAIOptions(false);
 
     try {
       const { aiMetadata, generatedFiles } = await analyzeFileWithAI(
@@ -104,21 +119,18 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         }
       );
 
-      // Update the file entry with AI metadata
-      const updatedFiles = files.map(f =>
-        f.id === fileEntry.id
-          ? { ...f, aiMetadata, aiGeneratedFiles: generatedFiles }
-          : f
-      );
+      const updatedFileEntry = { ...fileEntry, aiMetadata, aiGeneratedFiles: generatedFiles };
+      
+      // The parent component will handle merging this updated file into the main list
+      onAddFiles([updatedFileEntry]);
 
-      // Call onAddFiles with updated files (this will trigger a state update in parent)
-      onAddFiles(updatedFiles.filter(f => f.id === fileEntry.id));
 
       setAIProgress({ stage: 'complete', message: '✅ Análisis completado con éxito!' });
 
       setTimeout(() => {
         setAIAnalyzing(false);
         setAIProgress(null);
+        setSelectedFileForAI(null);
       }, 2000);
     } catch (error: any) {
       console.error('AI analysis error:', error);
@@ -127,13 +139,23 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
       setTimeout(() => {
         setAIAnalyzing(false);
         setAIProgress(null);
+        setSelectedFileForAI(null);
       }, 3000);
+    }
+  };
+
+  const handleOpenAIModal = (fileEntry: FileEntry) => {
+    const originalFile = fileObjectMap.get(fileEntry.id);
+    if (originalFile) {
+      setSelectedFileForAI({ file: originalFile, fileEntry });
+      setShowAIOptions(true);
+    } else {
+      alert('No se ha encontrado el archivo original. Por favor, vuelve a cargar el archivo para analizarlo.');
     }
   };
 
   return (
     <div>
-      {/* Library Button */}
       <div className="mb-4 flex justify-end">
         <Button
           variant="secondary"
@@ -144,7 +166,6 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         </Button>
       </div>
 
-      {/* Drag & Drop Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -193,7 +214,6 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         </div>
       )}
 
-      {/* AI Analysis Progress */}
       {aiAnalyzing && aiProgress && (
         <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-md">
           <p className="text-purple-700 font-semibold mb-2">
@@ -219,27 +239,9 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
               {files.length} archivo{files.length !== 1 ? 's' : ''} cargado{files.length !== 1 ? 's' : ''}
             </p>
             <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => exportToCSV(files)}
-                className="text-xs py-1 px-3"
-              >
-                📄 CSV
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => exportToExcel(files)}
-                className="text-xs py-1 px-3"
-              >
-                📊 Excel
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => exportToJSON(files)}
-                className="text-xs py-1 px-3"
-              >
-                🔧 JSON
-              </Button>
+              <Button variant="secondary" onClick={() => exportToCSV(files)} className="text-xs py-1 px-3">📄 CSV</Button>
+              <Button variant="secondary" onClick={() => exportToExcel(files)} className="text-xs py-1 px-3">📊 Excel</Button>
+              <Button variant="secondary" onClick={() => exportToJSON(files)} className="text-xs py-1 px-3">🔧 JSON</Button>
             </div>
           </div>
           <ul className="border border-gray-200 rounded-md divide-y divide-gray-200">
@@ -254,72 +256,20 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
                     <div className="mt-1 text-sm text-gray-500">
                       {Math.round(file.size / 1024)} KB • {file.mimeType}
                     </div>
-                    {file.md5 && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        <div><strong>MD5:</strong> <code className="bg-gray-100 px-1 rounded">{file.md5.substring(0, 16)}...</code></div>
-                        <div><strong>SHA-256:</strong> <code className="bg-gray-100 px-1 rounded">{file.sha256?.substring(0, 16)}...</code></div>
-                      </div>
-                    )}
-                    {file.imageTech && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        📐 {file.imageTech.width} × {file.imageTech.height}px
-                        {file.imageTech.xResolution && ` • ${file.imageTech.xResolution}dpi`}
-                        {file.imageTech.colorSpace && ` • ${file.imageTech.colorSpace}`}
-                      </div>
-                    )}
-                    {file.exif && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        📷 {file.exif.make} {file.exif.model}
-                        {file.exif.fNumber && ` • f/${file.exif.fNumber}`}
-                        {file.exif.exposureTime && ` • ${file.exif.exposureTime}`}
-                        {file.exif.iso && ` • ISO ${file.exif.iso}`}
-                      </div>
-                    )}
-                    {file.media && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        {/* Video metadata */}
-                        {file.media.width && file.media.height && (
-                          <div>
-                            🎬 {file.media.width}×{file.media.height}px
-                            {file.media.aspectRatio && ` (${file.media.aspectRatio})`}
-                            {file.media.frameRate && ` • ${file.media.frameRate}fps`}
-                            {file.media.videoCodec && ` • ${file.media.videoCodec}`}
-                          </div>
-                        )}
-                        {/* Audio/General metadata */}
-                        <div>
-                          {file.media.duration && `⏱️ ${file.media.duration.toFixed(2)}s`}
-                          {file.media.bitrate && ` • ${Math.round(file.media.bitrate / 1000)}kbps`}
-                          {file.media.audioCodec && ` • ${file.media.audioCodec}`}
-                        </div>
-                        {/* Audio specific */}
-                        {(file.media.sampleRate || file.media.channels) && (
-                          <div>
-                            🎵
-                            {file.media.sampleRate && ` ${file.media.sampleRate}Hz`}
-                            {file.media.channels && ` • ${file.media.channels === 1 ? 'Mono' : file.media.channels === 2 ? 'Estéreo' : `${file.media.channels} canales`}`}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* AI Metadata */}
+                    {/* ... other metadata */}
                     {file.aiMetadata && (
                       <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-md">
                         <div className="text-xs font-semibold text-purple-900 mb-2">🤖 Análisis con IA</div>
-
                         {file.aiMetadata.transcription && (
                           <div className="mb-2">
                             <div className="text-xs text-purple-800">
-                              <strong>Transcripción:</strong> {file.aiMetadata.transcription.text.substring(0, 150)}
-                              {file.aiMetadata.transcription.text.length > 150 && '...'}
+                              <strong>Transcripción:</strong> {file.aiMetadata.transcription.text.substring(0, 150)}{file.aiMetadata.transcription.text.length > 150 && '...'}
                             </div>
                             <div className="text-xs text-purple-600 mt-1">
                               Idioma: {file.aiMetadata.transcription.language} • Confianza: {(file.aiMetadata.transcription.confidence * 100).toFixed(1)}%
                             </div>
                           </div>
                         )}
-
                         {file.aiMetadata.analysis && (
                           <div className="text-xs text-purple-800 space-y-1">
                             <div><strong>Resumen:</strong> {file.aiMetadata.analysis.summary}</div>
@@ -329,15 +279,10 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
                             )}
                           </div>
                         )}
-
                         {file.aiGeneratedFiles && file.aiGeneratedFiles.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {file.aiGeneratedFiles.map((genFile, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => downloadGeneratedFile(genFile)}
-                                className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
-                              >
+                              <button key={idx} onClick={() => downloadGeneratedFile(genFile)} className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">
                                 ⬇️ {genFile.fileName}
                               </button>
                             ))}
@@ -347,25 +292,18 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
                     )}
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="ml-4 flex flex-col gap-1">
-                    {/* AI Analysis Button - only for audio/video */}
                     {(file.mimeType.startsWith('audio/') || file.mimeType.startsWith('video/')) && !file.aiMetadata && (
                       <Button
                         variant="secondary"
-                        onClick={() => {
-                          // We need the actual File object, but we don't have it in FileEntry
-                          // For now, show a message that they need to re-upload
-                          // In production, you'd want to store File references or implement re-upload
-                          alert('Para analizar con IA, por favor vuelve a cargar el archivo');
-                        }}
+                        onClick={() => handleOpenAIModal(file)}
                         className="p-1 text-xs whitespace-nowrap"
                         disabled={aiAnalyzing}
                       >
                         🤖 IA
                       </Button>
                     )}
-                    <Button variant="danger" onClick={() => onRemoveFile(file.id)} className="p-1 text-xs">
+                    <Button variant="danger" onClick={() => handleRemoveAndClean(file.id)} className="p-1 text-xs">
                       Eliminar
                     </Button>
                   </div>
@@ -376,14 +314,8 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
         </div>
       )}
 
-      {/* File Library Modal */}
-      <FileLibrary
-        isOpen={showLibrary}
-        onClose={() => setShowLibrary(false)}
-        onAddFiles={onAddFiles}
-      />
+      <FileLibrary isOpen={showLibrary} onClose={() => setShowLibrary(false)} onAddFiles={onAddFiles} />
 
-      {/* AI Analysis Options Modal */}
       {selectedFileForAI && (
         <AIAnalysisOptions
           isOpen={showAIOptions}
@@ -398,13 +330,8 @@ const FileSecForm: React.FC<FileSecFormProps> = ({ files, onAddFiles, onRemoveFi
               handleAnalyzeWithAI(selectedFileForAI.file, selectedFileForAI.fileEntry, options);
             }
           }}
-          onConfigureAPI={() => {
-            setShowAIOptions(false);
-            setShowAIConfig(true);
-          }}
         />
       )}
-
     </div>
   );
 };

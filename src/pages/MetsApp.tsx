@@ -132,11 +132,19 @@ const App: React.FC = () => {
     setMetsState(prevState => ({ ...prevState, amdSec: data }));
   }, []);
 
-  const handleAddFiles = useCallback((newFiles: FileEntry[]) => {
-    setMetsState(prevState => ({
-      ...prevState,
-      fileSec: [...prevState.fileSec, ...newFiles],
-    }));
+  const handleAddFiles = useCallback((newOrUpdatedFiles: FileEntry[]) => {
+    setMetsState(prevState => {
+      const existingFiles = prevState.fileSec;
+      const updatedFileIds = new Set(newOrUpdatedFiles.map(f => f.id));
+
+      // Filter out old versions of the files that are being updated
+      const filesToKeep = existingFiles.filter(f => !updatedFileIds.has(f.id));
+      
+      return {
+        ...prevState,
+        fileSec: [...filesToKeep, ...newOrUpdatedFiles],
+      };
+    });
   }, []);
 
   const handleRemoveFile = useCallback((id: string) => {
